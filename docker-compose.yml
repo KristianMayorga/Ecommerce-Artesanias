@@ -8,6 +8,11 @@ services:
       - "8000:8000"
     environment:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
     volumes:
       - ./backend:/app
     depends_on:
@@ -18,9 +23,13 @@ services:
     build: ./frontend
     container_name: frontend
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Puerto en el que corre React
     volumes:
       - ./frontend:/app
+    stdin_open: true  # Para permitir la interacción
+    tty: true         # Para habilitar el modo interactivo
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # Evitar problemas de hot-reload en Docker
     depends_on:
       - backend
 
