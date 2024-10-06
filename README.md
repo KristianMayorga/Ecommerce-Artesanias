@@ -33,3 +33,9 @@ Este proyecto consiste en una plataforma e-commerce que permite a los usuarios c
   - Sistema de mensajería para manejar eventos distribuidos entre los diferentes componentes.
 - **Base de Datos:** PostgreSQL
   - Almacén relacional de datos, ideal para manejar grandes volúmenes de información estructurada.
+
+### Estructura del Proyecto
+- **/backend/**: Código del backend (Django/Flask), modelos de datos, vistas y API.
+- **/frontend/**: Código del frontend (React), componentes y páginas.
+- **/workers/**: Código para los trabajadores de Celery, que manejan tareas asíncronas disparadas por eventos.
+- **docker-compose.yml**: Configuración de Docker para desplegar la aplicación.
