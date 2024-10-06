@@ -1,0 +1,7 @@
+.env
+/frontend/build
+*.pyc
+__pycache__/
+/media/
+/staticfiles/
+docker-compose.override.yml
