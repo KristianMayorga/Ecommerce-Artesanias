@@ -11,7 +11,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=db
       - DB_PORT=${DB_PORT}
     volumes:
       - ./backend:/app
@@ -23,13 +23,13 @@ services:
     build: ./frontend
     container_name: frontend
     ports:
-      - "3000:3000"  # Puerto en el que corre React
+      - "3000:3000"
     volumes:
       - ./frontend:/app
-    stdin_open: true  # Para permitir la interacción
-    tty: true         # Para habilitar el modo interactivo
+    stdin_open: true
+    tty: true
     environment:
-      - CHOKIDAR_USEPOLLING=true  # Evitar problemas de hot-reload en Docker
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
 
@@ -47,3 +47,14 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"  
+      PGADMIN_DEFAULT_PASSWORD: "admin"           
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
