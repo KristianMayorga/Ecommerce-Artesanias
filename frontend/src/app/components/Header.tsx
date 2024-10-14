@@ -11,7 +11,7 @@ const Header = () => {
                     height={40}
                     className="mr-2"
                 />
-                <h1 className="text-2xl font-bold">Artesanías Bogotá Ltda.</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Artesanías Bogotá Ltda.</h1>
             </div>
         </header>
     );
