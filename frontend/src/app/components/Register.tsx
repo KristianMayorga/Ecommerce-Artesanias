@@ -48,10 +48,10 @@ const Register: React.FC = () => {
 
     return (
         <div className="max-w-md mx-auto mt-10 p-6 bg-white/50 rounded-lg shadow-xl">
-            <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Registro</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                    <label htmlFor="nombre" className="block mb-1 font-medium">Nombre</label>
+                    <label htmlFor="nombre" className="block mb-1 font-medium text-gray-800">Nombre</label>
                     <input
                         id="nombre"
                         type="text"
@@ -62,7 +62,7 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="correo" className="block mb-1 font-medium">Correo</label>
+                    <label htmlFor="correo" className="block mb-1 font-medium text-gray-800">Correo</label>
                     <input
                         id="correo"
                         type="email"
@@ -73,7 +73,7 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="contraseña" className="block mb-1 font-medium">Contraseña</label>
+                    <label htmlFor="contraseña" className="block mb-1 font-medium text-gray-800">Contraseña</label>
                     <input
                         id="contraseña"
                         type="password"
