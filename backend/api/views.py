@@ -5,7 +5,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, LoginSerializer
-from accounts.models import CustomUser
+from accounts.models import Usuario
 
 # Create your views here.
 

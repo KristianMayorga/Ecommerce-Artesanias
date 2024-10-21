@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from accounts.models import CustomUser
+from accounts.models import Cliente
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+        validators=[UniqueValidator(queryset=Cliente.objects.all())]
     )
     password = serializers.CharField(
         write_only=True,
@@ -16,7 +16,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
-        model = CustomUser
+        model = Cliente
         fields = (
             'username', 'password', 'password2', 'email', 
             'first_name', 'last_name', 'bio', 'birth_date', 
@@ -30,7 +30,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
-        user = CustomUser.objects.create_user(**validated_data)
+        user = Cliente.objects.create_user(**validated_data)
         return user
 
 class LoginSerializer(serializers.Serializer):
