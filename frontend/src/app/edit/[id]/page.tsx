@@ -2,7 +2,7 @@
 
 import {Fragment, useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import {SubmitHandler, useForm} from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Swal from 'sweetalert2';
@@ -15,6 +15,8 @@ interface Product {
     image: string;
     category: string;
 }
+
+type ProductFormInputs = Omit<Product, 'id'>;
 
 const schema = yup.object().shape({
     name: yup.string()
@@ -106,7 +108,7 @@ export default function EditarProducto({ params }: { params: { id: string } }) {
         }
     }, [params.id, router, setValue, isClient]);
 
-    const onSubmit = async (data: any) => {
+    const onSubmit: SubmitHandler<ProductFormInputs> = async (data) => {
         try {
             const storedProducts = localStorage.getItem('lista-productos');
             if (!storedProducts) throw new Error('No se encontraron productos');

@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
+import Image from "next/image";
 
 interface Product {
     id: number;
@@ -120,7 +121,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
                 if (success) {
                     setProducts(updatedProducts);
-                    Swal.fire(
+                    await Swal.fire(
                         '¡Eliminado!',
                         'El producto ha sido eliminado.',
                         'success'
@@ -131,7 +132,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             }
         } catch (error) {
             console.error('Error deleting product:', error);
-            Swal.fire({
+            await Swal.fire({
                 title: 'Error',
                 text: 'No se pudo eliminar el producto',
                 icon: 'error',
@@ -152,7 +153,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {products.map((product) => (
                 <div key={product.id} className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <img src={product.image} alt={product.name} className="w-full h-48 object-cover" />
+                    <Image src={product.image} alt={product.name} width={192} height={192} className="w-full h-48 object-cover" />
                     <div className="p-4">
                         <h2 className="text-xl font-bold mb-2 text-[#789DBC]">{product.name}</h2>
                         <p className="text-gray-600 mb-2">{product.category}</p>
