@@ -1,38 +1,32 @@
 from rest_framework import serializers
-from accounts.models import CustomUser
-from django.contrib.auth.password_validation import validate_password
-from rest_framework.validators import UniqueValidator
+from accounts.models import Usuario
+from productos.models import Resena, Producto
 
-class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
-        required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
-    )
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        validators=[validate_password]
-    )
-    password2 = serializers.CharField(write_only=True, required=True)
+class UsuarioSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = CustomUser
-        fields = (
-            'username', 'password', 'password2', 'email', 
-            'first_name', 'last_name', 'bio', 'birth_date', 
-            'address', 'city', 'postal_code', 'country', 'role'
-        )
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Las contraseñas no coinciden."})
-        return attrs
+        model = Usuario
+        fields = ['id', 'nombre', 'email', 'password', 'numero_de_celular', 'rol']
 
     def create(self, validated_data):
-        validated_data.pop('password2')
-        user = CustomUser.objects.create_user(**validated_data)
-        return user
+        password = validated_data.pop('password')
+        usuario = Usuario.objects.create_user(**validated_data)
+        usuario.set_password(password)
+        usuario.save()
+        return usuario
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+class ResenaSerializer(serializers.ModelSerializer):
+    usuario = serializers.StringRelatedField(read_only=True)  # Mostrar el nombre del usuario.
+
+    class Meta:
+        model = Resena
+        fields = ['id', 'producto', 'usuario', 'contenido', 'calificacion', 'fecha']
+        read_only_fields = ['usuario', 'fecha'] 
+
+class ProductoSerializer(serializers.ModelSerializer):
+    reseñas = ResenaSerializer(many=True, read_only=True)  # Mostrar todas las reseñas del producto.
+
+    class Meta:
+        model = Producto
+        fields = ['id', 'nombre', 'categoria', 'stock', 'precio', 'imagen', 'reseñas']
