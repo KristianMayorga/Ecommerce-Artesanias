@@ -1,10 +1,15 @@
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.decorators import action
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UsuarioSerializer
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .serializers import UsuarioSerializer, ResenaSerializer, ProductoSerializer
 from accounts.models import Usuario
+from productos.models import Resena, Producto
+
 
 # Create your views here.
 
@@ -28,3 +33,18 @@ class LoginView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response({"detail": "Credenciales inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+class ProductoViewSet(viewsets.ModelViewSet):
+    queryset = Producto.objects.all()
+    serializer_class = ProductoSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Solo usuarios autenticados pueden modificar.
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticatedOrReadOnly])
+    def agregar_resena(self, request, pk=None):
+        """Agrega una reseña al producto especificado."""
+        producto = self.get_object()
+        serializer = ResenaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(producto=producto, usuario=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
