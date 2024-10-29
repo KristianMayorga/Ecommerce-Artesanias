@@ -7,14 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Swal from 'sweetalert2';
 import {UserData} from "@/app/types";
-
-interface Product {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    category: string;
-}
+import {Product} from "@/app/components/ListaProductos";
 
 type ProductFormInputs = Omit<Product, 'id'>;
 
@@ -33,7 +26,13 @@ const schema = yup.object().shape({
         .oneOf(['Cerámica', 'Textiles', 'Joyería', 'Madera', 'Cestería', 'Metal'], 'Categoría no válida'),
     image: yup.string()
         .required('La imagen es requerida')
-        .url('Debe ser una URL válida')
+        .url('Debe ser una URL válida'),
+    amount: yup.number()
+        .required('La cantidad es requerida')
+        .positive('La cantidad debe de ser positiva')
+        .min(1, 'La cantidad mínima es 1')
+        .max(100, 'La cantidad maxima es 100')
+        .integer('La cantidad debe ser un número entero')
 });
 
 export default function CrearProducto() {
@@ -132,6 +131,22 @@ export default function CrearProducto() {
                                     {errors.price && (
                                         <p className="mt-1 text-sm text-red-600">
                                             {errors.price.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Cantidad
+                                    </label>
+                                    <input
+                                        type="number"
+                                        {...register('amount')}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                    {errors.amount && (
+                                        <p className="mt-1 text-sm text-red-600">
+                                            {errors.amount.message}
                                         </p>
                                     )}
                                 </div>
