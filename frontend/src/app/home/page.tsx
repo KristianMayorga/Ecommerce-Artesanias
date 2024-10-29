@@ -6,6 +6,7 @@ import HomeAdmin from "@/app/components/HomeAdmin";
 import HomeClient from "@/app/components/HomeClient";
 import HomePOS from "@/app/components/HomePOS";
 import {UserData} from "@/app/types";
+import {CartProvider} from "@/app/context/CartContext";
 
 export default function Home() {
     const [userData, setUserData] = useState<UserData | null>(null);
@@ -38,10 +39,12 @@ export default function Home() {
     }
 
     return (
+        <CartProvider>
         <div className="container mx-auto px-4">
             {userData.role === 'admin' &&  <HomeAdmin name={userData.name}/>}
             {userData.role === 'vendedor' && <HomePOS name={userData.name} />}
             {userData.role === 'cliente' && <HomeClient name={userData.name} />}
         </div>
+        </CartProvider>
     );
 }

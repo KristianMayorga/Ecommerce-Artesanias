@@ -2,38 +2,40 @@ import {useEffect, useState} from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
+import {useCart} from "@/app/context/CartContext";
 
-interface Product {
+export interface Product {
     id: number;
     name: string;
     price: number;
     image: string;
     category: string;
+    amount: number;
 }
 
 const mockProducts: Product[] = [
-    { id: 1, name: "Jarrón de Barro Decorado", price: 89.99, image: "https://placehold.co/600x400", category: "Cerámica" },
-    { id: 2, name: "Plato Decorativo Talavera", price: 45.99, image: "https://placehold.co/600x400", category: "Cerámica" },
-    { id: 3, name: "Taza Artesanal", price: 24.99, image: "https://placehold.co/600x400", category: "Cerámica" },
-    { id: 4, name: "Maceta Pintada a Mano", price: 34.99, image: "https://placehold.co/600x400", category: "Cerámica" },
-    { id: 5, name: "Reboso Tejido", price: 129.99, image: "https://placehold.co/600x400", category: "Textiles" },
-    { id: 6, name: "Tapete Bordado", price: 79.99, image: "https://placehold.co/600x400", category: "Textiles" },
-    { id: 7, name: "Huipil Tradicional", price: 159.99, image: "https://placehold.co/600x400", category: "Textiles" },
-    { id: 8, name: "Cojín Bordado", price: 39.99, image: "https://placehold.co/600x400", category: "Textiles" },
-    { id: 9, name: "Collar de Plata y Turquesa", price: 189.99, image: "https://placehold.co/600x400", category: "Joyería" },
-    { id: 10, name: "Aretes de Filigrana", price: 45.99, image: "https://placehold.co/600x400", category: "Joyería" },
-    { id: 11, name: "Pulsera Tejida con Piedras", price: 29.99, image: "https://placehold.co/600x400", category: "Joyería" },
-    { id: 12, name: "Anillo de Cobre Martillado", price: 34.99, image: "https://placehold.co/600x400", category: "Joyería" },
-    { id: 13, name: "Alebrijes Pintados", price: 69.99, image: "https://placehold.co/600x400", category: "Madera" },
-    { id: 14, name: "Caja Tallada", price: 49.99, image: "https://placehold.co/600x400", category: "Madera" },
-    { id: 15, name: "Máscaras Decorativas", price: 59.99, image: "https://placehold.co/600x400", category: "Madera" },
-    { id: 16, name: "Porta Velas Tallado", price: 29.99, image: "https://placehold.co/600x400", category: "Madera" },
-    { id: 17, name: "Canasta de Palma", price: 44.99, image: "https://placehold.co/600x400", category: "Cestería" },
-    { id: 18, name: "Bolsa de Mimbre", price: 54.99, image: "https://placehold.co/600x400", category: "Cestería" },
-    { id: 19, name: "Sombrero de Palma", price: 39.99, image: "https://placehold.co/600x400", category: "Cestería" },
-    { id: 20, name: "Tapete de Fibras Naturales", price: 69.99, image: "https://placehold.co/600x400", category: "Cestería" },
-    { id: 21, name: "Cuadro en Repujado", price: 79.99, image: "https://placehold.co/600x400", category: "Metal" },
-    { id: 22, name: "Campana Decorativa", price: 49.99, image: "https://placehold.co/600x400", category: "Metal" },
+    { id: 1, name: "Jarrón de Barro Decorado", price: 89.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:15},
+    { id: 2, name: "Plato Decorativo Talavera", price: 45.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:20},
+    { id: 3, name: "Taza Artesanal", price: 24.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:10},
+    { id: 4, name: "Maceta Pintada a Mano", price: 34.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:15},
+    { id: 5, name: "Reboso Tejido", price: 129.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
+    { id: 6, name: "Tapete Bordado", price: 79.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
+    { id: 7, name: "Huipil Tradicional", price: 159.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
+    { id: 8, name: "Cojín Bordado", price: 39.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
+    { id: 9, name: "Collar de Plata y Turquesa", price: 189.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
+    { id: 10, name: "Aretes de Filigrana", price: 45.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
+    { id: 11, name: "Pulsera Tejida con Piedras", price: 29.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
+    { id: 12, name: "Anillo de Cobre Martillado", price: 34.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
+    { id: 13, name: "Alebrijes Pintados", price: 69.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
+    { id: 14, name: "Caja Tallada", price: 49.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
+    { id: 15, name: "Máscaras Decorativas", price: 59.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
+    { id: 16, name: "Porta Velas Tallado", price: 29.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
+    { id: 17, name: "Canasta de Palma", price: 44.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
+    { id: 18, name: "Bolsa de Mimbre", price: 54.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
+    { id: 19, name: "Sombrero de Palma", price: 39.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
+    { id: 20, name: "Tapete de Fibras Naturales", price: 69.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
+    { id: 21, name: "Cuadro en Repujado", price: 79.99, image: "https://placehold.co/600x400", category: "Metal", amount:20},
+    { id: 22, name: "Campana Decorativa", price: 49.99, image: "https://placehold.co/600x400", category: "Metal", amount:20},
 ];
 
 interface ProductListProps {
@@ -45,6 +47,8 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [isLoading, setIsLoading] = useState(true);
+    const { addToCart } = useCart();
+
 
     // Función para sincronizar con localStorage
     const syncWithLocalStorage = (updatedProducts: Product[]) => {
@@ -141,6 +145,19 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         }
     };
 
+    const handleAddToCart = (product: Product) => {
+        addToCart(product);
+        Swal.fire({
+            title: '¡Agregado!',
+            text: `${product.name} se ha agregado al carrito`,
+            icon: 'success',
+            timer: 1500,
+            position: 'top-end',
+            toast: true,
+            showConfirmButton: false
+        });
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center min-h-[200px]">
@@ -158,22 +175,34 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                         <h2 className="text-xl font-bold mb-2 text-[#789DBC]">{product.name}</h2>
                         <p className="text-gray-600 mb-2">{product.category}</p>
                         <p className="text-lg font-bold text-emerald-700">${product.price.toFixed(2)}</p>
-                        {isAdmin && (
-                            <div className="mt-4 flex justify-between">
-                                <button
-                                    onClick={() => handleEdit(product.id)}
-                                    className="bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(product.id)}
-                                    className="bg-red-400 hover:bg-red-500 text-gray-600 font-bold py-2 px-4 rounded"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        )}
+
+                        <div className="mt-4 space-y-2">
+                            {!isAdmin && (
+                            <button
+                                onClick={() => handleAddToCart(product)}
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors"
+                            >
+                                Agregar al Carrito
+                            </button>
+                            )}
+
+                            {isAdmin && (
+                                <div className="flex justify-between gap-2">
+                                    <button
+                                        onClick={() => handleEdit(product.id)}
+                                        className="bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded"
+                                    >
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(product.id)}
+                                        className="bg-red-400 hover:bg-red-500 text-gray-600 font-bold py-2 px-4 rounded"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             ))}
