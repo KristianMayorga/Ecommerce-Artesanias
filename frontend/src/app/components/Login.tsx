@@ -7,25 +7,41 @@ import * as yup from 'yup';
 import { useRouter } from 'next/navigation';
 
 interface ILoginInputs {
-    correo: string;
-    contraseña: string;
+    email: string;
+    password: string;
 }
 
 const schema = yup.object().shape({
-    correo: yup
+    email: yup
         .string()
         .matches(/^[^@]+@[^@]+\.[a-zA-Z]{2,}$/, 'Debe ser un correo válido.')
         .required('El correo es obligatorio'),
-    contraseña: yup
+    password: yup
         .string()
         .required('La contraseña es obligatoria'),
 });
 
 // Mock de usuario para validación
-const mockUser = {
-    correo: 'usuario@ejemplo.com',
-    contraseña: 'Contraseña123!'
-};
+const mockUsers =[
+    {
+        name: "Pepito Perez",
+        email: 'usuario@ejemplo.com',
+        password: 'Contraseña123!',
+        role: 'admin',
+    },
+    {
+        name: "Patricio Estrella",
+        email: 'patricio123@ejemplo.com',
+        password: 'Contraseña123!',
+        role: 'cliente',
+    },
+    {
+        name: "Juanito Juarez",
+        email: 'vendedorJuanito@ejemplo.com',
+        password: 'Contraseña123!',
+        role: 'vendedor',
+    }
+];
 
 const Login: React.FC = () => {
     const router = useRouter();
@@ -40,12 +56,15 @@ const Login: React.FC = () => {
     });
 
     const onSubmit: SubmitHandler<ILoginInputs> = (data) => {
-        if (data.correo === mockUser.correo && data.contraseña === mockUser.contraseña) {
-            // Login exitoso
+        const foundUser = mockUsers.find((user) =>
+            data.email === user.email && data.password === user.password
+        );
+
+        if (foundUser) {
             localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userData', JSON.stringify(foundUser));
             router.push('/home');
         } else {
-            // Login fallido
             setLoginError('Correo o contraseña incorrectos');
         }
     };
@@ -55,25 +74,25 @@ const Login: React.FC = () => {
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar Sesión</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                    <label htmlFor="correo" className="block mb-1 font-medium text-gray-800">Correo</label>
+                    <label htmlFor="email" className="block mb-1 font-medium text-gray-800">Correo</label>
                     <input
-                        id="correo"
+                        id="email"
                         type="email"
-                        {...register('correo')}
+                        {...register('email')}
                         className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.correo && <p className="text-red-500 text-sm mt-1">{errors.correo.message}</p>}
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                 </div>
 
                 <div>
-                    <label htmlFor="contraseña" className="block mb-1 font-medium text-gray-800">Contraseña</label>
+                    <label htmlFor="password" className="block mb-1 font-medium text-gray-800">Contraseña</label>
                     <input
-                        id="contraseña"
+                        id="password"
                         type="password"
-                        {...register('contraseña')}
+                        {...register('password')}
                         className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.contraseña && <p className="text-red-500 text-sm mt-1">{errors.contraseña.message}</p>}
+                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
                 </div>
 
                 {loginError && (
