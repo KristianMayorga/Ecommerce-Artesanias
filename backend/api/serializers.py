@@ -8,9 +8,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'email', 'password', 'numero_de_celular', 'rol']
+        fields = ['id', 'nombre', 'email', 'password', 'numero_de_celular']
 
     def create(self, validated_data):
+        validated_data['rol'] = 'cliente'
         password = validated_data.pop('password')
         usuario = Usuario.objects.create_user(**validated_data)
         usuario.set_password(password)
