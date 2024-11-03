@@ -25,7 +25,7 @@ const schema = yup.object().shape({
 const mockUsers =[
     {
         name: "Pepito Perez",
-        email: 'usuario@ejemplo.com',
+        email: 'admin1@ejemplo.com',
         password: 'Contraseña123!',
         role: 'admin',
     },
@@ -37,7 +37,7 @@ const mockUsers =[
     },
     {
         name: "Juanito Juarez",
-        email: 'vendedorJuanito@ejemplo.com',
+        email: 'vendedorjuanito@ejemplo.com',
         password: 'Contraseña123!',
         role: 'vendedor',
     }
