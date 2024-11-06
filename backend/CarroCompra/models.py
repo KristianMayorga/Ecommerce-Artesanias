@@ -1,7 +1,7 @@
 from django.db import models
 from accounts.models import Cliente
 from productos.models import Producto
-
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class CarroCompra(models.Model):
@@ -10,12 +10,27 @@ class CarroCompra(models.Model):
     productos = models.ManyToManyField(Producto, through='CarroProducto')
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
-    def agregar_producto(self, producto):
+    def agregar_producto(self, producto, cantidad =1):
+
+        if producto.stock < cantidad: #Validamos si hay suficiente
+            raise ValueError(f"No hay suficiente stock para {producto.nombre}. Stock disponible: {producto.stock}")
+        
         carro_producto, created = CarroProducto.objects.get_or_create(carro=self, producto=producto)
+
         if not created:
-            carro_producto.cantidad += 1
+            carro_producto.cantidad += cantidad
+        else:
+            carro_producto.cantidad = cantidad
+
+        # Restar la cantidad del stock en la bd
+        producto.stock -= cantidad
+        producto.save()
+        
+        #Guardamos
         carro_producto.save()
         self.calcular_total()
+
+
 
     def eliminar_producto(self, producto):
         try:
