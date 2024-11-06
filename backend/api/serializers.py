@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from accounts.models import Usuario
-from productos.models import Resena, Producto
+from productos.models import Producto
+from resena.models import Resena
 from CarroCompra.models import CarroCompra, CarroProducto
 
 class UsuarioSerializer(serializers.ModelSerializer):
