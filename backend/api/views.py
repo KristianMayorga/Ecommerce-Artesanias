@@ -79,6 +79,7 @@ class ProductoView(APIView):
         producto.delete()
         return Response({"detail": "Producto eliminado."}, status=status.HTTP_204_NO_CONTENT)
 
+
 class CarroCompraView(APIView):
     permission_classes = [IsAuthenticated]
 
