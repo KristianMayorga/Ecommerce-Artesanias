@@ -84,7 +84,7 @@ class CarroCompraView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Obtiene el carrito de compras del usuario actual."""
+        """Obtemos el carrito de compras del usuario actual."""
         try:
             carrito = CarroCompra.objects.get(cliente=request.user)
             serializer = CarroCompraSerializer(carrito)
@@ -93,19 +93,42 @@ class CarroCompraView(APIView):
             return Response({"detail": "Carrito no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request):
-        """Agrega un producto al carrito del usuario actual."""
+        """Agregamps producto al carrito del usuario actual."""
         producto_id = request.data.get("producto_id")
         cantidad = request.data.get("cantidad", 1)
 
         try:
             producto = Producto.objects.get(id=producto_id)
+            
+            # Verificar stock
+            if producto.stock < cantidad:
+                return Response({"detail": "No hay suficiente stock disponible."}, status=status.HTTP_400_BAD_REQUEST)
+            
             carrito, created = CarroCompra.objects.get_or_create(cliente=request.user)
-            carrito.agregar_producto(producto)
-            carrito_producto = CarroProducto.objects.get(carro=carrito, producto=producto)
-            carrito_producto.cantidad = cantidad
+            
+            # Verificar produucto carrito
+            carrito_producto, creado = CarroProducto.objects.get_or_create(carro=carrito, producto=producto)
+            
+            if not creado:  # Si ya esta actualizamos la cantidad
+                carrito_producto.cantidad += cantidad
+            else:
+                carrito_producto.cantidad = cantidad
+            
+            # Verificar que el stock actualizado sea suficiente
+            if producto.stock < carrito_producto.cantidad:
+                return Response({"detail": "No hay suficiente stock disponible."}, status=status.HTTP_400_BAD_REQUEST)
+            
             carrito_producto.save()
+            
+            # Calcular el total del carrito
             carrito.calcular_total()
+
+            # Restar el stock disponible del producto
+            producto.stock -= cantidad
+            producto.save()
+            
             return Response({"detail": "Producto agregado al carrito"}, status=status.HTTP_201_CREATED)
+        
         except Producto.DoesNotExist:
             return Response({"detail": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -114,12 +137,24 @@ class CarroCompraView(APIView):
         try:
             carrito = CarroCompra.objects.get(cliente=request.user)
             producto = Producto.objects.get(id=producto_id)
-            carrito.eliminar_producto(producto)
+            carrito_producto = CarroProducto.objects.get(carro=carrito, producto=producto)
+            
+            # Volver a sumar el stock al eliminar el producto del carrito
+            producto.stock += carrito_producto.cantidad
+            producto.save()
+
+            carrito_producto.delete()  # Eliminar el producto del carrito
+
+            # Calcular el total del carrito después de la eliminación
+            carrito.calcular_total()
+
             return Response({"detail": "Producto eliminado del carrito"}, status=status.HTTP_204_NO_CONTENT)
         except CarroCompra.DoesNotExist:
             return Response({"detail": "Carrito no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         except Producto.DoesNotExist:
             return Response({"detail": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        except CarroProducto.DoesNotExist:
+            return Response({"detail": "El producto no está en el carrito"}, status=status.HTTP_404_NOT_FOUND)
         
 class CrearPagoView(APIView):
     def post(self, request):
