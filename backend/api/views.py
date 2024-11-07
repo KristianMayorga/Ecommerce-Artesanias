@@ -11,8 +11,8 @@ from .serializers import UsuarioSerializer, ResenaSerializer, ProductoSerializer
 from accounts.models import Usuario
 from productos.models import Resena, Producto
 from CarroCompra.models import CarroCompra, CarroProducto
-
-
+from .paypal_config import paypalrestsdk
+from django.conf import settings
 
 # Create your views here.
 
@@ -119,3 +119,54 @@ class CarroCompraView(APIView):
             return Response({"detail": "Carrito no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         except Producto.DoesNotExist:
             return Response({"detail": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+class CrearPagoView(APIView):
+    def post(self, request):
+        """Crea un pago en PayPal para el carrito de compras."""
+        carro = CarroCompra.objects.get(cliente=request.user)
+        total_cop = carro.total
+
+        # Convierte el total de COP a USD
+        total_usd = total_cop * settings.EXCHANGE_RATE_COP_TO_USD
+        total_usd = f"{total_usd:.2f}" 
+
+        pago = paypalrestsdk.Payment({
+            "intent": "sale",
+            "payer": {
+                "payment_method": "paypal"
+            },
+            "redirect_urls": {
+                "return_url": f"{settings.SITE_URL}/api/pagos/aprobar/",
+                "cancel_url": f"{settings.SITE_URL}/api/pagos/cancelar/"
+            },
+            "transactions": [{
+                "amount": {
+                    "total": total_usd,
+                    "currency": "USD"
+                },
+                "description": f"Compra en {settings.SITE_NAME}."
+            }]
+        })
+
+        # Creación y redirección a PayPal
+        if pago.create():
+            for link in pago.links:
+                if link.method == "REDIRECT":
+                    redirect_url = link.href
+                    return Response({"url": redirect_url}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": pago.error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class AprobarPagoView(APIView):
+    def get(self, request):
+        """Procesa la aprobación de un pago realizado en PayPal."""
+        pago_id = request.GET.get("paymentId")
+        payer_id = request.GET.get("PayerID")
+
+        pago = paypalrestsdk.Payment.find(pago_id)
+        if pago.execute({"payer_id": payer_id}):
+            # Aquí puedes actualizar el estado del carrito a "pagado" o crear una orden.
+            return Response({"message": "Pago realizado con éxito"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": pago.error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
