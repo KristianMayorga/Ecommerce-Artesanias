@@ -11,8 +11,10 @@ urlpatterns = [
     path('productos/<int:producto_id>/actualizar/', ProductoView.as_view(), name='actualizar_producto'),
     path('productos/<int:producto_id>/eliminar/', ProductoView.as_view(), name='eliminar_producto'),
 
-    path('carrito/', CarroCompraView.as_view(), name='carro-compra'),
-    path('carrito/<int:producto_id>/', CarroCompraView.as_view(), name='eliminar-producto-carrito'),
+    
+    path('carrito/', CarroCompraView.as_view(), name='ver-carro-compra'),  
+    path('carrito/agregar/', CarroCompraView.as_view(), name='agregar-producto-carrito'),  
+    path('carrito/eliminar/<int:producto_id>/', CarroCompraView.as_view(), name='eliminar-producto-carrito'),  
 
     path('pagos/crear/', CrearPagoView.as_view(), name='crear_pago'),
     path('pagos/aprobar/', AprobarPagoView.as_view(), name='aprobar_pago'),
