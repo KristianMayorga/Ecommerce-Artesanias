@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
 class MetodoDePago(models.Model):
@@ -8,6 +8,23 @@ class MetodoDePago(models.Model):
     def __str__(self):
         return self.nombre
 
+class UsuarioManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        """Crea y retorna un usuario con un email."""
+        if not email:
+            raise ValueError('El campo del email no debe estar vacio')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Crea y retorna un super usuario con un email."""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        return self.create_user(email, password, **extra_fields)
 
 class Usuario(AbstractUser):
     # Campos personalizados
@@ -21,7 +38,9 @@ class Usuario(AbstractUser):
 
     # se establece el email como el campo principal para la autenticación
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [] 
+    REQUIRED_FIELDS = []
+
+    objects = UsuarioManager()
 
     def __str__(self):
         return self.email

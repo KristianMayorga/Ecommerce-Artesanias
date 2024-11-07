@@ -84,7 +84,7 @@ class CarroCompraView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Obtemos el carrito de compras del usuario actual."""
+        """Obtenemos el carrito de compras del usuario actual."""
         try:
             carrito = CarroCompra.objects.get(cliente=request.user)
             serializer = CarroCompraSerializer(carrito)
@@ -93,7 +93,7 @@ class CarroCompraView(APIView):
             return Response({"detail": "Carrito no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request):
-        """Agregamps producto al carrito del usuario actual."""
+        """Agregamos producto al carrito del usuario actual."""
         producto_id = request.data.get("producto_id")
         cantidad = request.data.get("cantidad", 1)
 
@@ -106,7 +106,7 @@ class CarroCompraView(APIView):
             
             carrito, created = CarroCompra.objects.get_or_create(cliente=request.user)
             
-            # Verificar produucto carrito
+            # Verificar producto carrito
             carrito_producto, creado = CarroProducto.objects.get_or_create(carro=carrito, producto=producto)
             
             if not creado:  # Si ya esta actualizamos la cantidad
@@ -202,7 +202,6 @@ class AprobarPagoView(APIView):
 
         pago = paypalrestsdk.Payment.find(pago_id)
         if pago.execute({"payer_id": payer_id}):
-            # Aquí puedes actualizar el estado del carrito a "pagado" o crear una orden.
             return Response({"message": "Pago realizado con éxito"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": pago.error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
