@@ -1,8 +1,11 @@
 import { Trash2, Plus, Minus } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useCart } from "@/app/context/CartContext";
+import { useRouter } from 'next/navigation';
+
 
 export default function ShoppingCart() {
+    const router = useRouter();
     const {
         items,
         removeFromCart,
@@ -79,7 +82,7 @@ export default function ShoppingCart() {
                     onClick={handleClearCart}
                     className="flex items-center text-red-500 hover:text-red-700"
                 >
-                    <Trash2 className="w-5 h-5 mr-2" />
+                    <Trash2 className="w-5 h-5 mr-2"/>
                 </button>
             </div>
 
@@ -103,7 +106,7 @@ export default function ShoppingCart() {
                                     className="text-gray-500 hover:text-gray-700"
                                     disabled={item.quantity <= 1}
                                 >
-                                    <Minus className="w-5 h-5" />
+                                    <Minus className="w-5 h-5"/>
                                 </button>
                                 <span className="w-8 text-center font-medium">
                                     {item.quantity}
@@ -112,7 +115,7 @@ export default function ShoppingCart() {
                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                     className="text-gray-500 hover:text-gray-700"
                                 >
-                                    <Plus className="w-5 h-5" />
+                                    <Plus className="w-5 h-5"/>
                                 </button>
                             </div>
 
@@ -125,7 +128,7 @@ export default function ShoppingCart() {
                                 className="ml-6 text-gray-400 hover:text-red-500"
                                 aria-label="Eliminar producto"
                             >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className="w-5 h-5"/>
                             </button>
                         </div>
                     </div>
@@ -138,14 +141,7 @@ export default function ShoppingCart() {
                     <span className="text-xl font-bold text-emerald-600">${totalAmount.toFixed(2)}</span>
                 </div>
                 <button
-                    onClick={() => {
-                        Swal.fire({
-                            title: '¡Gracias por tu compra!',
-                            text: 'Esta es una simulación. En una aplicación real, aquí continuaría el proceso de pago.',
-                            icon: 'success',
-                            confirmButtonText: 'Entendido'
-                        });
-                    }}
+                    onClick={() => router.push('/checkout')}
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded transition-colors"
                 >
                     Proceder al Pago

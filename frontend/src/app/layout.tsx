@@ -3,6 +3,7 @@ import { Rethink_Sans } from 'next/font/google'
 import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Providers from "@/app/providers";
 
 const rethink = Rethink_Sans({
     subsets: ['latin'],
@@ -24,9 +25,11 @@ export default function RootLayout({
         <body
             className={`${rethink.className} antialiased flex flex-col w-full min-h-screen bg-[#FEF9F2]`}
         >
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+        <Providers>
+            <Header />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+        </Providers>
         </body>
         </html>
     );
