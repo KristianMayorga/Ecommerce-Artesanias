@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'Pedido',
     'productos',
     'resena '
+    'celery'
 ]
 
 MIDDLEWARE = [
