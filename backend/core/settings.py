@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'orders',
     'Pedido',
     'productos',
-    'resena '
+    'resena',
     'celery'
 ]
 
@@ -158,3 +158,10 @@ PAYPAL_MODE = 'sandbox'
 
 # Tasa de cambio fija COP a USD
 EXCHANGE_RATE_COP_TO_USD = 0.00026  # Se debe actualizar el valor dependiendo de la tasa de cambio del dia
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Usamos Redis como broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'UTC'
