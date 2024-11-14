@@ -19,6 +19,14 @@ class UsuarioSerializer(serializers.ModelSerializer):
         usuario.save()
         return usuario
 
+
+class ProductoSerializer(serializers.ModelSerializer):
+    reseñas = ResenaSerializer(many=True, read_only=True)  # Mostrar todas las reseñas del producto.
+
+    class Meta:
+        model = Producto
+        fields = ['id', 'nombre', 'categoria', 'stock', 'precio', 'imagen', 'reseñas']
+
 class ResenaSerializer(serializers.ModelSerializer):
     usuario = serializers.StringRelatedField(read_only=True)  # Mostrar el nombre del usuario.
 
@@ -27,12 +35,21 @@ class ResenaSerializer(serializers.ModelSerializer):
         fields = ['id', 'producto', 'usuario', 'contenido', 'calificacion', 'fecha']
         read_only_fields = ['usuario', 'fecha']
 
-class ProductoSerializer(serializers.ModelSerializer):
-    reseñas = ResenaSerializer(many=True, read_only=True)  # Mostrar todas las reseñas del producto.
+class ResenaSerializer(serializers.ModelSerializer):
+    usuario = serializers.StringRelatedField(read_only=True)  # Mostrar el nombre del usuario
+    producto = ProductoSerializer(read_only=True)  # Mostrar todos los detalles del producto
 
     class Meta:
-        model = Producto
-        fields = ['id', 'nombre', 'categoria', 'stock', 'precio', 'imagen', 'reseñas']
+        model = Resena
+        fields = ['id', 'producto', 'usuario', 'contenido', 'calificacion', 'fecha']
+        read_only_fields = ['usuario', 'fecha']
+
+    # Validación adicional para el campo calificacion
+    def validate_calificacion(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("La calificación debe estar entre 1 y 5.")
+        return value
+    
 
 class CarroProductoSerializer(serializers.ModelSerializer):
     producto = serializers.StringRelatedField()
