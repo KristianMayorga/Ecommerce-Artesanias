@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from productos.models import Producto
-from accounts.models import Usuario
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -17,6 +16,9 @@ class Resena(models.Model):
             models.UniqueConstraint(fields=['producto', 'usuario'], name='unique_resena_producto_usuario')
         ]
         indexes = [
-            models.Index(fields=['producto']),  # Indice para búsquedas por producto
-            models.Index(fields=['usuario']),   # Indice para búsquedas por usuario
+            models.Index(fields=['producto']),  # Índice para búsquedas por producto
+            models.Index(fields=['usuario']),   # Índice para búsquedas por usuario
         ]
+    
+    def __str__(self):
+        return f'Reseña de {self.usuario} para {self.producto}'
