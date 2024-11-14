@@ -1,15 +1,12 @@
-
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 
-# Configuración predeterminada de Django para Celery
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
-app = Celery('core')
+app = Celery('ARTESANIASBGA')
 
-# Cargar configuración desde settings.py, usando un prefijo CELERY_
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Autodiscover tasks en cada aplicación de Django
+# Cargar tareas de todos los módulos de aplicación registrados
 app.autodiscover_tasks()
