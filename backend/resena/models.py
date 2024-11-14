@@ -16,3 +16,7 @@ class Resena(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['producto', 'usuario'], name='unique_resena_producto_usuario')
         ]
+        indexes = [
+            models.Index(fields=['producto']),  # Indice para búsquedas por producto
+            models.Index(fields=['usuario']),   # Indice para búsquedas por usuario
+        ]
