@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import {useCart} from "@/app/context/CartContext";
+import {Pencil, ShoppingCart, Trash2} from "lucide-react";
 
 export interface Product {
     id: number;
@@ -68,13 +69,6 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 const storedProducts = localStorage.getItem('lista-productos');
                 if (storedProducts) {
                     setProducts(JSON.parse(storedProducts));
-                    Swal.fire({
-                        title: '¡Productos Cargados!',
-                        text: 'Los productos se han cargado desde el almacenamiento local',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
                 } else {
                     syncWithLocalStorage(mockProducts);
                     setProducts(mockProducts);
@@ -82,7 +76,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                         title: 'Inicialización',
                         text: 'Se han cargado los productos iniciales',
                         icon: 'info',
-                        timer: 2000,
+                        timer: 1000,
                         showConfirmButton: false
                     });
                 }
@@ -180,8 +174,9 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                             {!isAdmin && (
                             <button
                                 onClick={() => handleAddToCart(product)}
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors"
+                                className="w-full flex items-center gap-2 justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
                             >
+                                <ShoppingCart size={20} />
                                 Agregar al Carrito
                             </button>
                             )}
@@ -190,14 +185,16 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                 <div className="flex justify-between gap-2">
                                     <button
                                         onClick={() => handleEdit(product.id)}
-                                        className="bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded"
+                                        className="flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded-lg transition-colors"
                                     >
+                                        <Pencil size={20} />
                                         Editar
                                     </button>
                                     <button
                                         onClick={() => handleDelete(product.id)}
-                                        className="bg-red-400 hover:bg-red-500 text-gray-600 font-bold py-2 px-4 rounded"
+                                        className="flex items-center gap-2 bg-red-400 hover:bg-red-500 text-gray-100 font-bold py-2 px-4 rounded-lg transition-colors"
                                     >
+                                        <Trash2 size={20} />
                                         Eliminar
                                     </button>
                                 </div>

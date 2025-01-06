@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import OrderForm from '@/app/components/CustomOrderForm';
+import {withAuth} from "@/app/context/AuthContext";
 
 interface UserData {
     name: string;
     role: 'admin' | 'cliente';
 }
 
-export default function NewCustomOrderPage() {
+function NewCustomOrderPage() {
     const router = useRouter();
     const [userData, setUserData] = useState<UserData | null>(null);
 
@@ -31,3 +32,5 @@ export default function NewCustomOrderPage() {
 
     return <OrderForm />;
 }
+
+export default withAuth(NewCustomOrderPage, ['cliente', 'vendedor'])

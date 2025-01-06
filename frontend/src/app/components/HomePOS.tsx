@@ -1,7 +1,8 @@
 import ListaProductos from "@/app/components/ListaProductos";
 import ShoppingCart from "@/app/components/ShoppingCart";
+import {withAuth} from "@/app/context/AuthContext";
 
-export default function HomePOS({name}: {name:string}) {
+function HomePOS({name}: {name:string}) {
     return (
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl text-gray-800 font-bold mb-6">Bienvenido Vendedor, {name}!</h1>
@@ -11,7 +12,7 @@ export default function HomePOS({name}: {name:string}) {
                         <ListaProductos />
                     </div>
                     <div className="lg:col-span-1">
-                        <div className="sticky top-4">
+                        <div className="sticky top-20">
                             <ShoppingCart />
                         </div>
                     </div>
@@ -19,3 +20,5 @@ export default function HomePOS({name}: {name:string}) {
             </div>
     );
 }
+
+export default withAuth(HomePOS, ['vendedor'])

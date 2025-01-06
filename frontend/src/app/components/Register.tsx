@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useRouter } from 'next/navigation';
+import {useAuth} from "@/app/context/AuthContext";
 
 interface IFormInputs {
     name: string;
@@ -51,8 +51,7 @@ const schema = yup.object().shape({
 });
 
 const Register: React.FC = () => {
-    const router = useRouter();
-
+    const { login } = useAuth();
     const {
         register,
         handleSubmit,
@@ -62,13 +61,11 @@ const Register: React.FC = () => {
     });
 
     const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-        console.log(data);
-        data.role = 'cliente';
-        // Guardar en localStorage
-        localStorage.setItem('userData', JSON.stringify(data));
-        // Redireccionar a /home
-        router.push('/home');
-        console.log(data);
+        login({
+            name: data.name,
+            email: data.email,
+            role: 'cliente',
+        })
     };
 
     return (

@@ -7,6 +7,7 @@ import StatusBadge from "./StatusBadge";
 import AdminControls from "./AdminControls";
 import OrderComments from "./OrderComments";
 import Link from "next/link";
+import {useAuth} from "@/app/context/AuthContext";
 
 export default function ListaPedidos() {
     const [orders, setOrders] = useState<CustomOrder[]>([]);
@@ -14,17 +15,13 @@ export default function ListaPedidos() {
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState('');
-    const [userData, setUserData] = useState<{ role: string; email: string } | null>(null);
+
+    const { isAdmin, user } = useAuth();
 
     useEffect(() => {
-        const storedUserData = localStorage.getItem('userData');
-        if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
-        }
         loadOrders();
     }, []);
 
-    const isAdmin = useMemo(() => userData?.role === 'admin', [userData]);
 
     const filteredOrders = useMemo(() => {
         let filtered = orders;
@@ -32,10 +29,10 @@ export default function ListaPedidos() {
             filtered = orders.filter(order => order.status === statusFilter);
         }
         if (!isAdmin) {
-            filtered = filtered.filter(order => order.email === userData?.email);
+            filtered = filtered.filter(order => order.email === user?.email);
         }
         return filtered;
-    }, [orders, statusFilter, isAdmin, userData?.email]);
+    }, [orders, statusFilter, isAdmin, user?.email]);
 
     const loadOrders = useCallback(() => {
         const storedOrders = localStorage.getItem('pedidos-personalizados');
