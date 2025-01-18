@@ -40,8 +40,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'accounts',
-    'productos',
     'CarroCompra',
+    'inventory',
+    'orders',
+    'Pedido',
+    'productos',
+    'resena',
+    'celery'
 ]
 
 MIDDLEWARE = [
@@ -146,3 +151,17 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'accounts.Usuario'
+
+PAYPAL_CLIENT_ID = 'AZyhxHU3ztMb_mDXFBhbywSC_ygOSr7z1PTCGYJxeOPrfKMpl3EZgiAQXN4pcrNqv3JaRuVdIL_7TOEk' 
+PAYPAL_SECRET = 'EKgMWnxgeNk_Hzpe4DQLyKJiIufgI47lP2sO5Yaz2xUSINc4u3KCik6zmGFc7mDX_ib1TX5AHQmapXrw'
+PAYPAL_MODE = 'sandbox'
+
+# Tasa de cambio fija COP a USD
+EXCHANGE_RATE_COP_TO_USD = 0.00026  # Se debe actualizar el valor dependiendo de la tasa de cambio del dia
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Usamos Redis como broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'UTC'
