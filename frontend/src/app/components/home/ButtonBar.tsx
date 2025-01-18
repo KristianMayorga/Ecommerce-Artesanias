@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Swal from "sweetalert2";
 import {useAuth} from "@/app/context/AuthContext";
-import {ChartNoAxesColumn, CirclePlus, PackagePlus} from "lucide-react";
+import {ChartNoAxesColumn, CirclePlus, Heart, PackagePlus} from "lucide-react";
 
 const ButtonBar = () => {
 
@@ -48,6 +48,16 @@ const ButtonBar = () => {
                 Ver pedidos personalizados
             </div>
             </Link>
+            {user?.role === 'cliente' && (
+                <Link href="/wishlist">
+                    <div
+                        className="flex items-center gap-2 px-4 py-2 bg-pink-300 hover:bg-pink-400 text-gray-600 rounded-lg transition-colors"
+                    >
+                        <Heart size={20}/>
+                        Mi lista de deseos
+                    </div>
+                </Link>
+            )}
         </div>
     );
 };
