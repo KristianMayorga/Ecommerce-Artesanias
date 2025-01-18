@@ -1,10 +1,11 @@
-import { Trash2, Plus, Minus } from 'lucide-react';
+import {Trash2, Plus, Minus, CreditCard} from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useCart } from "@/app/context/CartContext";
 import { useRouter } from 'next/navigation';
+import {withAuth} from "@/app/context/AuthContext";
 
 
-export default function ShoppingCart() {
+function ShoppingCart() {
     const router = useRouter();
     const {
         items,
@@ -65,7 +66,7 @@ export default function ShoppingCart() {
 
     if (items.length === 0) {
         return (
-            <div className="bg-white p-6">
+            <div className="bg-white p-6 shadow-md rounded-lg">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Tu carrito está vacío</h2>
                 <p className="text-gray-600">¡Agrega algunos productos para empezar!</p>
             </div>
@@ -73,7 +74,7 @@ export default function ShoppingCart() {
     }
 
     return (
-        <div className="bg-white p-6 min-w-[300px]">
+        <div className="bg-white p-6 min-w-[300px] shadow-md rounded-lg">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800">
                     {totalItems} {totalItems === 1 ? 'item' : 'items'}
@@ -142,11 +143,14 @@ export default function ShoppingCart() {
                 </div>
                 <button
                     onClick={() => router.push('/checkout')}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded transition-colors"
+                    className="w-full flex gap-2 items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded transition-colors"
                 >
+                    <CreditCard size={20} />
                     Proceder al Pago
                 </button>
             </div>
         </div>
     );
 }
+
+export default withAuth(ShoppingCart, ['cliente', 'vendedor'])

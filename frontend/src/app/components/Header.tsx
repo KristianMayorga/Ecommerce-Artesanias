@@ -1,43 +1,59 @@
 'use client'
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import {HomeIcon, LogOut} from 'lucide-react';
+import {useAuth} from "@/app/context/AuthContext";
+import {usePathname} from "next/navigation";
+import Link from "next/link";
 
 const Header = () => {
-    const router = useRouter();
     const pathname = usePathname();
-    const isHomePage = pathname === '/home';
+    const isHomePage = pathname === '/home' || pathname === '/login' || pathname === '/register' || pathname === "/";
+    const { logout, user } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('userData');
-        router.push('/login');
+       logout();
     };
 
     return (
-        <header className="sticky top-0 z-50 shadow-md bg-[#789DBC]/90">
+        <header className="sticky top-0 z-50 shadow-md bg-blue-300/90">
             <div className="container mx-auto px-4 py-2 flex items-center justify-between text-gray-800">
-                <div className="px-4 flex items-center">
-                    <Image
-                        src="/images/logoArtesanias.svg"
-                        alt="Logo"
-                        width={40}
-                        height={40}
-                        className="mr-2"
-                    />
-                    <h1 className="text-2xl font-bold">Artesanías Bogotá Ltda.</h1>
-                </div>
+                <Link href={"/home"}>
+                    <div className="px-4 flex items-center">
+                        <Image
+                            src="/images/logoArtesanias.svg"
+                            alt="Logo"
+                            width={40}
+                            height={40}
+                            className="mr-2"
+                        />
+                        <h1 className="text-2xl font-bold">Artesanías Bogotá Ltda.</h1>
+                    </div>
+                </Link>
 
-                {isHomePage && (
+                <div className={"flex justify-between"}>
+                {!isHomePage && (
                     <div className="px-4">
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                        <Link href="/home">
+                            <div className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                            >
+                                <HomeIcon size={20}/>
+                                    Volver al Home
+                            </div>
+                        </Link>
+                    </div>
+                    )}
+                {user && (
+                    <div className="px-4">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 px-4 py-2 text-white bg-red-400 hover:bg-red-500 rounded-lg transition-colors"
                     >
                         <LogOut size={20} />
                         Cerrar Sesión
                     </button>
                     </div>
                 )}
+                </div>
             </div>
         </header>
     );

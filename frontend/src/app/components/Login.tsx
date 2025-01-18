@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useRouter } from 'next/navigation';
+import {useAuth} from "@/app/context/AuthContext";
+import {UserData} from "@/app/types";
+import {LogInIcon} from "lucide-react";
 
 interface ILoginInputs {
     email: string;
@@ -22,7 +24,7 @@ const schema = yup.object().shape({
 });
 
 // Mock de usuario para validación
-const mockUsers =[
+const mockUsers: UserData[] = [
     {
         name: "Pepito Perez",
         email: 'admin1@ejemplo.com',
@@ -50,8 +52,8 @@ const mockUsers =[
 ];
 
 const Login: React.FC = () => {
-    const router = useRouter();
     const [loginError, setLoginError] = useState<string | null>(null);
+    const { login } = useAuth();
 
     const {
         register,
@@ -67,9 +69,11 @@ const Login: React.FC = () => {
         );
 
         if (foundUser) {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userData', JSON.stringify(foundUser));
-            router.push('/home');
+            login({
+                name: foundUser.name,
+                email: foundUser.email,
+                role: foundUser.role,
+            });
         } else {
             setLoginError('Correo o contraseña incorrectos');
         }
@@ -109,8 +113,9 @@ const Login: React.FC = () => {
 
                 <button
                     type="submit"
-                    className="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-900"
+                    className="w-full flex items-center gap-2 justify-center bg-teal-700 text-white py-2 px-4 rounded-lg transition-colors hover:bg-teal-900"
                 >
+                    <LogInIcon size={20} />
                     Iniciar Sesión
                 </button>
             </form>

@@ -1,17 +1,20 @@
 import ListaProductos from "@/app/components/ListaProductos";
 import ShoppingCart from "@/app/components/ShoppingCart";
+import {withAuth} from "@/app/context/AuthContext";
+import ButtonBar from "@/app/components/home/ButtonBar";
 
-export default function HomeClient({name}: {name:string}) {
+function HomeClient({name}: {name:string}) {
     return (
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl text-gray-800 font-bold mb-6">Bienvenido, {name}!</h1>
+                <ButtonBar />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
                         <ListaProductos />
                     </div>
                     <div className="lg:col-span-1">
-                        <div className="sticky top-4">
+                        <div className="sticky top-20">
                             <ShoppingCart />
                         </div>
                     </div>
@@ -19,3 +22,5 @@ export default function HomeClient({name}: {name:string}) {
             </div>
     );
 }
+
+export default withAuth(HomeClient, ['cliente'])
