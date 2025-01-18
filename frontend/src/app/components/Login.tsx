@@ -40,7 +40,13 @@ const mockUsers =[
         email: 'vendedorjuanito@ejemplo.com',
         password: 'Contraseña123!',
         role: 'vendedor',
-    }
+    },
+    {
+        name: "Pepito Usuario",
+        email: 'usuario@ejemplo.com',
+        password: 'Contraseña123!',
+        role: 'cliente',
+    },
 ];
 
 const Login: React.FC = () => {

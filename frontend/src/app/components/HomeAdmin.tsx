@@ -22,6 +22,9 @@ export default function HomeAdmin({name}: {name:string}) {
                 <Link href="/create" className="bg-green-300 hover:bg-green-400 text-gray-600 font-bold py-2 px-4 rounded">
                     Crear producto
                 </Link>
+                <Link href="/custom-order" className="bg-blue-300 hover:bg-blue-400 text-gray-600 font-bold py-2 px-4 rounded">
+                    Ver pedidos personalizados
+                </Link>
             </div>
             <ListaProductos isAdmin={true} />
         </div>
