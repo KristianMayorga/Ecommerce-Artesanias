@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image';
-import {HomeIcon, LogOut} from 'lucide-react';
+import {HomeIcon, LogOut, UserRound, UserRoundPlus} from 'lucide-react';
 import {useAuth} from "@/app/context/AuthContext";
 import {usePathname} from "next/navigation";
 import Link from "next/link";
@@ -52,6 +52,26 @@ const Header = () => {
                         Cerrar Sesión
                     </button>
                     </div>
+                )}
+                {!user && (
+                    <div className="px-4 flex justify-between">
+                        <Link href="/register">
+                            <div className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                            >
+                                <UserRoundPlus size={20}/>
+                                Registrarse
+                            </div>
+                        </Link>
+
+                        <Link href="/login">
+                            <div className="flex items-center gap-2 px-4 mx-2 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                            >
+                                <UserRound size={20}/>
+                                Iniciar Sesión
+                            </div>
+                        </Link>
+                    </div>
+
                 )}
                 </div>
             </div>

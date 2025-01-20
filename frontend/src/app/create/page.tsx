@@ -138,7 +138,7 @@ function CrearProducto() {
                             <option value="Textiles">Textiles</option>
                             <option value="Joyería">Joyería</option>
                             <option value="Madera">Madera</option>
-                            <option value="Cestería">Cestería</option>
+                            <option value="Vidrio">Vidrio</option>
                             <option value="Metal">Metal</option>
                         </select>
                         {errors.category && (
