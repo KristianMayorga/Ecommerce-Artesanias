@@ -5,3 +5,12 @@ export interface UserData {
     name: string;
 }
 
+export interface Product {
+    id: number;
+    name: string;
+    price: number;
+    image: string;
+    category: string;
+    amount: number;
+}
+

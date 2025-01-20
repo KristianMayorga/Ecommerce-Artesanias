@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Swal from "sweetalert2";
 import {useAuth} from "@/app/context/AuthContext";
-import {ChartNoAxesColumn, CirclePlus, PackagePlus} from "lucide-react";
+import {ChartNoAxesColumn, CirclePlus, PackagePlus, Users} from "lucide-react";
 
 const ButtonBar = () => {
 
@@ -47,6 +47,14 @@ const ButtonBar = () => {
                 <PackagePlus size={20}/>
                 Ver pedidos personalizados
             </div>
+            </Link>
+            <Link href="/users">
+                <div
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-300 hover:bg-purple-400 text-gray-600 rounded-lg transition-colors"
+                >
+                    <Users size={20}/>
+                    Gestión de Usuarios
+                </div>
             </Link>
         </div>
     );

@@ -5,8 +5,8 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Swal from 'sweetalert2';
-import {Product} from "@/app/components/ListaProductos";
 import {withAuth} from "@/app/context/AuthContext";
+import {Product} from "@/app/types";
 
 type ProductFormInputs = Omit<Product, 'id'>;
 

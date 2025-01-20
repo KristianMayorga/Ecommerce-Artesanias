@@ -4,15 +4,7 @@ import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import {useCart} from "@/app/context/CartContext";
 import {Pencil, ShoppingCart, Trash2} from "lucide-react";
-
-export interface Product {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    category: string;
-    amount: number;
-}
+import {Product} from "@/app/types";
 
 const mockProducts: Product[] = [
     { id: 1, name: "Jarrón de Barro Decorado", price: 89.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:15},
