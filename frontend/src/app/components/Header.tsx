@@ -8,6 +8,7 @@ import Link from "next/link";
 const Header = () => {
     const pathname = usePathname();
     const isHomePage = pathname === '/home' || pathname === '/login' || pathname === '/register' || pathname === "/";
+    const isAuthPage = pathname === '/login' || pathname === '/register';
     const { logout, user } = useAuth();
 
     const handleLogout = () => {
@@ -53,26 +54,24 @@ const Header = () => {
                     </button>
                     </div>
                 )}
-                {!user && (
-                    <div className="px-4 flex justify-between">
-                        <Link href="/register">
-                            <div className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-                            >
-                                <UserRoundPlus size={20}/>
-                                Registrarse
-                            </div>
-                        </Link>
+                    {!user && !isAuthPage && (
+                        <div className="px-4 flex justify-between">
+                            <Link href="/register">
+                                <div className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                                    <UserRoundPlus size={20}/>
+                                    Registrarse
+                                </div>
+                            </Link>
 
-                        <Link href="/login">
-                            <div className="flex items-center gap-2 px-4 mx-2 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-                            >
-                                <UserRound size={20}/>
-                                Iniciar Sesión
-                            </div>
-                        </Link>
-                    </div>
+                            <Link href="/login">
+                                <div className="flex items-center gap-2 px-4 mx-2 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                                    <UserRound size={20}/>
+                                    Iniciar Sesión
+                                </div>
+                            </Link>
+                        </div>
+                    )}
 
-                )}
                 </div>
             </div>
         </header>
