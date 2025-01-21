@@ -4,7 +4,9 @@ import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import {useAuth} from "@/app/context/AuthContext";
+import { useRouter } from 'next/navigation';
+import Swal from "sweetalert2";
+import {CONST} from "@/app/constants";
 
 interface IFormInputs {
     name: string;
@@ -13,6 +15,12 @@ interface IFormInputs {
     confirmPassword: string;
     phone: string;
     role: string;
+}
+
+interface IRegisterRequest {
+    nombre: string;
+    email: string;
+    password: string;
 }
 
 const schema = yup.object().shape({
@@ -51,21 +59,62 @@ const schema = yup.object().shape({
 });
 
 const Register: React.FC = () => {
-    const { login } = useAuth();
+    const router = useRouter();
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<IFormInputs>({
         resolver: yupResolver(schema),
     });
 
-    const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-        login({
-            name: data.name,
-            email: data.email,
-            role: 'cliente',
-        })
+    const onSubmit: SubmitHandler<IFormInputs> = async (data) => {
+        try {
+            const registerData: IRegisterRequest = {
+                nombre: data.name,
+                email: data.email,
+                password: data.password
+            };
+
+            const response = await fetch(`${CONST.url}/accounts/register/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(registerData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                await Swal.fire({
+                    title: '¡Error!',
+                    text: errorData,
+                    icon: 'error',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            await Swal.fire({
+                title: '¡Registrado!',
+                text: `Registro Exitoso`,
+                icon: 'success',
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false
+            });
+            setTimeout(() => {
+                router.push('/login');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error durante el registro:', error);
+        }
     };
 
     return (
@@ -131,9 +180,10 @@ const Register: React.FC = () => {
 
                 <button
                     type="submit"
-                    className="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-900"
+                    disabled={isSubmitting}
+                    className="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-900 disabled:bg-teal-500 disabled:cursor-not-allowed"
                 >
-                    Registrarse
+                    {isSubmitting ? 'Registrando...' : 'Registrarse'}
                 </button>
             </form>
         </div>

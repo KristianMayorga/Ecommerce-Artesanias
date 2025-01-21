@@ -1,16 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import {useAuth} from "@/app/context/AuthContext";
-import {UserData} from "@/app/types";
-import {LogInIcon} from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import { LogInIcon } from "lucide-react";
+import Swal from "sweetalert2";
+import {CONST} from "@/app/constants";
 
 interface ILoginInputs {
     email: string;
     password: string;
+}
+
+interface LoginResponse {
+    access: string;
+    role: string;
+    nombre?: string;
 }
 
 const schema = yup.object().shape({
@@ -23,59 +30,80 @@ const schema = yup.object().shape({
         .required('La contraseña es obligatoria'),
 });
 
-// Mock de usuario para validación
-const mockUsers: UserData[] = [
-    {
-        name: "Pepito Perez",
-        email: 'admin1@ejemplo.com',
-        password: 'Contraseña123!',
-        role: 'admin',
-    },
-    {
-        name: "Patricio Estrella",
-        email: 'patricio123@ejemplo.com',
-        password: 'Contraseña123!',
-        role: 'cliente',
-    },
-    {
-        name: "Juanito Juarez",
-        email: 'vendedorjuanito@ejemplo.com',
-        password: 'Contraseña123!',
-        role: 'vendedor',
-    },
-    {
-        name: "Pepito Usuario",
-        email: 'usuario@ejemplo.com',
-        password: 'Contraseña123!',
-        role: 'cliente',
-    },
-];
-
 const Login: React.FC = () => {
-    const [loginError, setLoginError] = useState<string | null>(null);
     const { login } = useAuth();
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<ILoginInputs>({
         resolver: yupResolver(schema),
     });
 
-    const onSubmit: SubmitHandler<ILoginInputs> = (data) => {
-        const foundUser = mockUsers.find((user) =>
-            data.email === user.email && data.password === user.password
-        );
-
-        if (foundUser) {
-            login({
-                name: foundUser.name,
-                email: foundUser.email,
-                role: foundUser.role,
+    const onSubmit: SubmitHandler<ILoginInputs> = async (data) => {
+        try {
+            const response = await fetch(`${CONST.url}/accounts/login/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: data.email,
+                    password: data.password,
+                }),
             });
-        } else {
-            setLoginError('Correo o contraseña incorrectos');
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                if (errorData.detail) {
+                    await Swal.fire({
+                        title: '¡Error!',
+                        text: errorData.detail,
+                        icon: 'error',
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    await Swal.fire({
+                        title: '¡Error!',
+                        text: 'Crendenciales Inválidas',
+                        icon: 'error',
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true,
+                        showConfirmButton: false
+                    });
+                }
+
+                return;
+            }
+
+            const responseData: LoginResponse = await response.json();
+
+            const userData = {
+                name: responseData.nombre || 'Usuario',
+                email: data.email,
+                role: responseData.role,
+            };
+
+            login(responseData.access, userData);
+
+            await Swal.fire({
+                title: '¡Inicio Coreecto!',
+                text: `Exitoso`,
+                icon: 'success',
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false
+            });
+
+        } catch (error) {
+            console.error('Error durante el inicio de sesión:', error);
         }
     };
 
@@ -105,18 +133,13 @@ const Login: React.FC = () => {
                     {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
                 </div>
 
-                {loginError && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                        <span className="block sm:inline">{loginError}</span>
-                    </div>
-                )}
-
                 <button
                     type="submit"
-                    className="w-full flex items-center gap-2 justify-center bg-teal-700 text-white py-2 px-4 rounded-lg transition-colors hover:bg-teal-900"
+                    disabled={isSubmitting}
+                    className="w-full flex items-center gap-2 justify-center bg-teal-700 text-white py-2 px-4 rounded-lg transition-colors hover:bg-teal-900 disabled:bg-teal-500 disabled:cursor-not-allowed"
                 >
                     <LogInIcon size={20} />
-                    Iniciar Sesión
+                    {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </button>
             </form>
         </div>

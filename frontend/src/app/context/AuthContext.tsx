@@ -2,15 +2,21 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserData } from '@/app/types';
+
+interface UserData {
+    name: string;
+    email: string;
+    role: string;
+}
 
 interface AuthContextType {
     user: UserData | null;
-    login: (userData: UserData) => void;
+    login: (token: string, userData: UserData) => void;
     logout: () => void;
     isLoading: boolean;
     isAdmin: boolean;
     checkPermission: (requiredRole: string) => boolean;
+    getToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,56 +27,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'userData') {
-                if (!e.newValue) {
-                    setUser(null);
-                    router.push('/login');
-                } else {
-                    try {
-                        const userData = JSON.parse(e.newValue) as UserData;
-                        setUser(userData);
-                    } catch (error) {
-                        console.error('Error parsing userData:', error);
-                        setUser(null);
-                        router.push('/login');
-                    }
-                }
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('userData');
+
+        if (token && storedUser) {
+            try {
+                const userData = JSON.parse(storedUser) as UserData;
+                setUser(userData);
+            } catch (error) {
+                console.error('Error parsing userData:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('userData');
+                router.push('/login');
             }
-        };
-
-        const initializeAuth = () => {
-            const storedUser = localStorage.getItem('userData');
-            if (storedUser) {
-                try {
-                    const userData = JSON.parse(storedUser) as UserData;
-                    setUser(userData);
-                } catch (error) {
-                    console.error('Error parsing userData:', error);
-                    router.push('/login');
-                }
-            }
-            setIsLoading(false);
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        initializeAuth();
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
+        }
+        setIsLoading(false);
     }, [router]);
 
-    const login = (userData: UserData) => {
+    const login = (token: string, userData: UserData) => {
         setUser(userData);
+        localStorage.setItem('token', token);
         localStorage.setItem('userData', JSON.stringify(userData));
         router.push('/home');
     };
 
     const logout = () => {
         setUser(null);
+        localStorage.removeItem('token');
         localStorage.removeItem('userData');
         router.push('/login');
+    };
+
+    const getToken = (): string | null => {
+        return localStorage.getItem('token');
     };
 
     const isAdmin = user?.role === 'admin';
@@ -88,7 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             logout,
             isLoading,
             isAdmin,
-            checkPermission
+            checkPermission,
+            getToken
         }}>
             {children}
         </AuthContext.Provider>
