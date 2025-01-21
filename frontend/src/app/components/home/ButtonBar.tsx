@@ -48,14 +48,16 @@ const ButtonBar = () => {
                 Ver pedidos personalizados
             </div>
             </Link>
-            <Link href="/users">
-                <div
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-300 hover:bg-purple-400 text-gray-600 rounded-lg transition-colors"
-                >
-                    <Users size={20}/>
-                    Gestión de Usuarios
-                </div>
-            </Link>
+            {user?.role === 'admin' && (
+                <Link href="/users">
+                    <div
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-300 hover:bg-purple-400 text-gray-600 rounded-lg transition-colors"
+                    >
+                        <Users size={20}/>
+                        Gestión de Usuarios
+                    </div>
+                </Link>
+            )}
         </div>
     );
 };

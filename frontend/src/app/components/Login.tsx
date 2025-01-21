@@ -8,6 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { LogInIcon } from "lucide-react";
 import Swal from "sweetalert2";
 import {CONST} from "@/app/constants";
+import Link from "next/link";
 
 interface ILoginInputs {
     email: string;
@@ -93,7 +94,7 @@ const Login: React.FC = () => {
             login(responseData.access, userData);
 
             await Swal.fire({
-                title: '¡Inicio Coreecto!',
+                title: '¡Inicio Correcto!',
                 text: `Exitoso`,
                 icon: 'success',
                 timer: 1500,
@@ -142,6 +143,9 @@ const Login: React.FC = () => {
                     {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </button>
             </form>
+            <div className={"pt-6 text-gray-700"}>
+                <Link href={"/register"}>Aún no tengo cuenta!</Link>
+            </div>
         </div>
     );
 };

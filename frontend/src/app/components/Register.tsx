@@ -7,6 +7,7 @@ import * as yup from 'yup';
 import { useRouter } from 'next/navigation';
 import Swal from "sweetalert2";
 import {CONST} from "@/app/constants";
+import Link from "next/link";
 
 interface IFormInputs {
     name: string;
@@ -87,15 +88,29 @@ const Register: React.FC = () => {
             if (!response.ok) {
                 const errorData = await response.json();
 
-                await Swal.fire({
-                    title: '¡Error!',
-                    text: errorData,
-                    icon: 'error',
-                    timer: 1500,
-                    position: 'top-end',
-                    toast: true,
-                    showConfirmButton: false
-                });
+
+                if (errorData.detail) {
+                    await Swal.fire({
+                        title: '¡Error!',
+                        text: errorData.detail,
+                        icon: 'error',
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    await Swal.fire({
+                        title: '¡Error!',
+                        text: 'Error de Registro',
+                        icon: 'error',
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true,
+                        showConfirmButton: false
+                    });
+                }
+
                 return;
             }
 
@@ -186,6 +201,9 @@ const Register: React.FC = () => {
                     {isSubmitting ? 'Registrando...' : 'Registrarse'}
                 </button>
             </form>
+            <div className={"pt-6 text-gray-700"}>
+                <Link href={"/login"}>Ya tengo una cuenta!</Link>
+            </div>
         </div>
     );
 };
