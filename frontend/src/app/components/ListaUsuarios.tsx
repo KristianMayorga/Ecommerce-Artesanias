@@ -1,42 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { UserCircle, Pencil, Trash2, Plus } from "lucide-react";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { CONST } from "@/app/constants";
+import Swal from "sweetalert2";
+import {useAuth} from "@/app/context/AuthContext";
 
 interface UserData {
-    name: string;
+    id?: number;
+    nombre: string;
     email: string;
-    password: string;
-    role: "admin" | "cliente" | "vendedor";
+    numero_de_celular: string;
+    rol: "admin" | "cliente" | "vendedor";
+    password?: string;
 }
-
-const mockUsers: UserData[] = [
-    {
-        name: "Pepito Perez",
-        email: "admin1@ejemplo.com",
-        password: "Contraseña123!",
-        role: "admin",
-    },
-    {
-        name: "Patricio Estrella",
-        email: "patricio123@ejemplo.com",
-        password: "Contraseña123!",
-        role: "cliente",
-    },
-    {
-        name: "Juanito Juarez",
-        email: "vendedorjuanito@ejemplo.com",
-        password: "Contraseña123!",
-        role: "vendedor",
-    },
-    {
-        name: "Pepito Usuario",
-        email: "usuario@ejemplo.com",
-        password: "Contraseña123!",
-        role: "cliente",
-    },
-];
 
 export default function UserManagement() {
     const [users, setUsers] = useState<UserData[]>([]);
@@ -44,22 +22,15 @@ export default function UserManagement() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState<UserData | null>(null);
 
+    const { getToken } = useAuth();
+
     const [formData, setFormData] = useState<UserData>({
-        name: "",
+        nombre: "",
         email: "",
         password: "",
-        role: "cliente",
+        numero_de_celular: "",
+        rol: "cliente",
     });
-
-    const syncWithLocalStorage = (updatedUsers: UserData[]) => {
-        try {
-            localStorage.setItem("users-data", JSON.stringify(updatedUsers));
-            return true;
-        } catch (error) {
-            console.error("Error saving to localStorage:", error);
-            return false;
-        }
-    };
 
     const getRoleColorClasses = (role: string) => {
         switch (role) {
@@ -74,36 +45,59 @@ export default function UserManagement() {
         }
     };
 
-    useEffect(() => {
-        const loadUsers = () => {
-            try {
-                const storedUsers = localStorage.getItem("users-data");
-                if (storedUsers) {
-                    setUsers(JSON.parse(storedUsers));
-                } else {
-                    setUsers(mockUsers);
-                    syncWithLocalStorage(mockUsers);
-                }
-            } catch (error) {
-                console.error("Error loading users:", error);
-            } finally {
-                setIsLoading(false);
+    const fetchUsers = async () => {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('No token found');
             }
-        };
-        loadUsers();
+
+            const response = await fetch(`${CONST.url}/accounts/usuarios`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch users');
+            }
+
+            const data = await response.json();
+            setUsers(data);
+        } catch (error) {
+            console.error('Error loading users:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los usuarios',
+                icon: 'error',
+                position: 'top-end',
+                toast: true,
+                timer: 3000
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
     }, []);
 
     const handleOpenModal = (user: UserData | null) => {
         if (user) {
             setCurrentUser(user);
-            setFormData(user);
+            setFormData({
+                ...user,
+                password: ""
+            });
         } else {
             setCurrentUser(null);
             setFormData({
-                name: "",
+                nombre: "",
                 email: "",
                 password: "",
-                role: "cliente",
+                numero_de_celular: "",
+                rol: "cliente",
             });
         }
         setIsModalOpen(true);
@@ -124,35 +118,128 @@ export default function UserManagement() {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        let updatedUsers: UserData[] = [];
-
-        if (currentUser) {
-            updatedUsers = users.map((user) =>
-                user.email === currentUser.email ? formData : user
-            );
-        } else {
-            updatedUsers = [...users, formData];
+        const token = getToken();
+        if (!token) {
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se encontró el token de autenticación',
+                icon: 'error',
+                position: 'top-end',
+                toast: true,
+                timer: 3000
+            });
+            return;
         }
 
-        if (syncWithLocalStorage(updatedUsers)) {
-            setUsers(updatedUsers);
+        try {
+            let response;
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
+            if (currentUser) {
+                const updateData = {
+                    nombre: formData.nombre,
+                    email: formData.email,
+                    rol: formData.rol,
+                    numero_de_celular: formData.numero_de_celular
+                };
+
+                response = await fetch(`${CONST.url}/accounts/usuarios/${currentUser.id}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(updateData)
+                });
+            } else {
+                response = await fetch(`${CONST.url}/accounts/usuarios`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(formData)
+                });
+            }
+
+            if (!response.ok) {
+
+                const res = await response.json();
+                let err: string | undefined;
+                if (res.email[0]){
+                    err = res.email[0]
+                }
+
+                await Swal.fire({
+                    title: 'Error',
+                    text: err || 'No se pudo guardar el usuario',
+                    icon: 'error',
+                    position: 'top-end',
+                    toast: true,
+                    timer: 3000
+                });
+
+                throw new Error('Failed to save user');
+            }
+
+            await fetchUsers();
             handleCloseModal();
+
+            await Swal.fire({
+                title: 'Éxito',
+                text: currentUser ? 'Usuario actualizado' : 'Usuario creado',
+                icon: 'success',
+                position: 'top-end',
+                toast: true,
+                timer: 3000
+            });
+
+        } catch (error) {
+            console.log(error)
         }
     };
 
-    const handleDelete = (email: string) => {
-        const updatedUsers = users.filter((user) => user.email !== email);
-        if (syncWithLocalStorage(updatedUsers)) {
-            setUsers(updatedUsers);
+    const handleDelete = async (id: number) => {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${CONST.url}/accounts/usuarios/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete user');
+            }
+
+            await fetchUsers();
+
+            await Swal.fire({
+                title: 'Éxito',
+                text: 'Usuario eliminado',
+                icon: 'success',
+                position: 'top-end',
+                toast: true,
+                timer: 3000
+            });
+
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudo eliminar el usuario',
+                icon: 'error',
+                position: 'top-end',
+                toast: true,
+                timer: 3000
+            });
         }
     };
 
     if (isLoading) {
-        return (
-            <LoadingSpinner/>
-        );
+        return <LoadingSpinner />;
     }
 
     return (
@@ -170,20 +257,21 @@ export default function UserManagement() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {users.map((user) => (
-                    <div key={user.email} className="bg-white shadow-md rounded-lg p-6">
+                    <div key={user.id} className="bg-white shadow-md rounded-lg p-6">
                         <div className="flex items-center gap-4 mb-4">
                             <UserCircle size={40} className="text-gray-400" />
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-600">{user.name}</h2>
+                                <h2 className="text-xl font-semibold text-gray-600">{user.nombre}</h2>
                                 <p className="text-gray-600">{user.email}</p>
+                                <p className="text-gray-500 text-sm">Tel: {user.numero_de_celular}</p>
                             </div>
                         </div>
                         <div
                             className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColorClasses(
-                                user.role
+                                user.rol
                             )} mb-4`}
                         >
-                            {user.role}
+                            {user.rol}
                         </div>
                         <div className="flex gap-2 mt-4">
                             <button
@@ -194,7 +282,7 @@ export default function UserManagement() {
                                 <span>Editar</span>
                             </button>
                             <button
-                                onClick={() => handleDelete(user.email)}
+                                onClick={() => user.id && handleDelete(user.id)}
                                 className="flex-1 flex items-center justify-center gap-2 text-white font-bold bg-red-400 hover:bg-red-500 rounded-lg transition-colors"
                             >
                                 <Trash2 size={16} />
@@ -215,9 +303,9 @@ export default function UserManagement() {
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-600">Nombre</label>
                                 <input
-                                    name="name"
+                                    name="nombre"
                                     type="text"
-                                    value={formData.name}
+                                    value={formData.nombre}
                                     onChange={handleInputChange}
                                     required
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
@@ -236,25 +324,41 @@ export default function UserManagement() {
                                     placeholder="correo@ejemplo.com"
                                 />
                             </div>
+                            {!currentUser && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-600">
+                                        Contraseña
+                                    </label>
+                                    <input
+                                        name="password"
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        required={!currentUser}
+                                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+                                        placeholder="********"
+                                    />
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-600">
-                                    Contraseña
+                                    Número de Celular
                                 </label>
                                 <input
-                                    name="password"
-                                    type="password"
-                                    value={formData.password}
+                                    name="numero_de_celular"
+                                    type="text"
+                                    value={formData.numero_de_celular}
                                     onChange={handleInputChange}
                                     required
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-                                    placeholder="********"
+                                    placeholder="0000000000"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-600">Rol</label>
                                 <select
-                                    name="role"
-                                    value={formData.role}
+                                    name="rol"
+                                    value={formData.rol}
                                     onChange={handleInputChange}
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
                                 >

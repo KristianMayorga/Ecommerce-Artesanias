@@ -32,7 +32,7 @@ class Usuario(AbstractUser):
     nombre = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
     numero_de_celular = models.CharField(max_length=20,default='0000000000')
-    rol = models.CharField(max_length=20, default="cliente")  # Puede ser "cliente", "empleado" o "administrador"
+    rol = models.CharField(max_length=20, default="cliente")  # Puede ser "cliente", "vendedor" o "admin"
 
     username = None
 
