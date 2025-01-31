@@ -1,3 +1,3 @@
 export const CONST = {
-    url: 'http://localhost:8000'
+    url: 'https://apirestartesanias.onrender.com'
 }

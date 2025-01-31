@@ -1,32 +1,46 @@
 'use client';
 
 import React from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import {SubmitHandler, useForm} from 'react-hook-form';
+import {yupResolver} from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useAuth } from "@/app/context/AuthContext";
-import { LogInIcon } from "lucide-react";
+import {useAuth} from "@/app/context/AuthContext";
+import {LogInIcon} from "lucide-react";
 import Swal from "sweetalert2";
 import {CONST} from "@/app/constants";
 import Link from "next/link";
 
 interface ILoginInputs {
     email: string;
-    password: string;
+    pss: string;
 }
 
 interface LoginResponse {
-    access: string;
-    role: string;
-    nombre?: string;
+    error: boolean;
+    token: string;
+    rol: RoleResponse;
+    id: string;
 }
 
+interface RoleResponse {
+    state: string;
+    name: string;
+}
+
+interface IUserData {
+    usuarios: UserDataResponse;
+}
+
+interface UserDataResponse {
+    name: string;
+    email?: string;
+}
 const schema = yup.object().shape({
     email: yup
         .string()
         .matches(/^[^@]+@[^@]+\.[a-zA-Z]{2,}$/, 'Debe ser un correo válido.')
         .required('El correo es obligatorio'),
-    password: yup
+    pss: yup
         .string()
         .required('La contraseña es obligatoria'),
 });
@@ -42,16 +56,54 @@ const Login: React.FC = () => {
         resolver: yupResolver(schema),
     });
 
+    const fetchName = async (id: string, token: string): Promise<string | undefined> => {
+        try {
+            const response = await fetch(`${CONST.url}/usuario/read-usuario/${id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            console.log("fetchName");
+            console.log(response);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                await Swal.fire({
+                    title: '¡Error!',
+                    text: errorData.detail || 'Credenciales Inválidas',
+                    icon: 'error',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+
+                return undefined;
+            }
+
+            const responseData: IUserData = await response.json();
+            return responseData.usuarios.name;
+
+        } catch (error) {
+            console.error('Error al obtener el nombre del usuario:', error);
+            return undefined;
+        }
+    }
+
     const onSubmit: SubmitHandler<ILoginInputs> = async (data) => {
         try {
-            const response = await fetch(`${CONST.url}/accounts/login/`, {
+            const response = await fetch(`${CONST.url}/usuario/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     email: data.email,
-                    password: data.password,
+                    pss: data.pss,
                 }),
             });
 
@@ -86,12 +138,12 @@ const Login: React.FC = () => {
             const responseData: LoginResponse = await response.json();
 
             const userData = {
-                name: responseData.nombre || 'Usuario',
+                name: await fetchName(responseData.id, responseData.token) || 'Desconocido',
                 email: data.email,
-                role: responseData.role,
+                role: responseData.rol.name,
             };
 
-            login(responseData.access, userData);
+            login(responseData.token, userData);
 
             await Swal.fire({
                 title: '¡Inicio Correcto!',
@@ -124,14 +176,14 @@ const Login: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block mb-1 font-medium text-gray-800">Contraseña</label>
+                    <label htmlFor="pss" className="block mb-1 font-medium text-gray-800">Contraseña</label>
                     <input
-                        id="password"
+                        id="pss"
                         type="password"
-                        {...register('password')}
+                        {...register('pss')}
                         className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+                    {errors.pss && <p className="text-red-500 text-sm mt-1">{errors.pss.message}</p>}
                 </div>
 
                 <button
