@@ -1,82 +1,55 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
-import {useCart} from "@/app/context/CartContext";
-import {Pencil, ShoppingCart, Trash2} from "lucide-react";
-import {Product} from "@/app/types";
-
-const mockProducts: Product[] = [
-    { id: 1, name: "Jarrón de Barro Decorado", price: 89.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:15},
-    { id: 2, name: "Plato Decorativo Talavera", price: 45.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:20},
-    { id: 3, name: "Taza Artesanal", price: 24.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:10},
-    { id: 4, name: "Maceta Pintada a Mano", price: 34.99, image: "https://placehold.co/600x400", category: "Cerámica", amount:15},
-    { id: 5, name: "Reboso Tejido", price: 129.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
-    { id: 6, name: "Tapete Bordado", price: 79.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
-    { id: 7, name: "Huipil Tradicional", price: 159.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
-    { id: 8, name: "Cojín Bordado", price: 39.99, image: "https://placehold.co/600x400", category: "Textiles", amount:20},
-    { id: 9, name: "Collar de Plata y Turquesa", price: 189.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
-    { id: 10, name: "Aretes de Filigrana", price: 45.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
-    { id: 11, name: "Pulsera Tejida con Piedras", price: 29.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
-    { id: 12, name: "Anillo de Cobre Martillado", price: 34.99, image: "https://placehold.co/600x400", category: "Joyería", amount:20},
-    { id: 13, name: "Alebrijes Pintados", price: 69.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
-    { id: 14, name: "Caja Tallada", price: 49.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
-    { id: 15, name: "Máscaras Decorativas", price: 59.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
-    { id: 16, name: "Porta Velas Tallado", price: 29.99, image: "https://placehold.co/600x400", category: "Madera", amount:20},
-    { id: 17, name: "Canasta de Palma", price: 44.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
-    { id: 18, name: "Bolsa de Mimbre", price: 54.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
-    { id: 19, name: "Sombrero de Palma", price: 39.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
-    { id: 20, name: "Tapete de Fibras Naturales", price: 69.99, image: "https://placehold.co/600x400", category: "Cestería", amount:20},
-    { id: 21, name: "Cuadro en Repujado", price: 79.99, image: "https://placehold.co/600x400", category: "Metal", amount:20},
-    { id: 22, name: "Campana Decorativa", price: 49.99, image: "https://placehold.co/600x400", category: "Metal", amount:20},
-];
-
-interface ProductListProps {
-    isAdmin?: boolean;
-}
+import { useCart } from "@/app/context/CartContext";
+import { Pencil, ShoppingCart, Trash2 } from "lucide-react";
+import { CONST } from "@/app/constants";
+import {useAuth} from "@/app/context/AuthContext";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import {CategoryResponse, ProductListProps, Stock, StockResponse} from "@/app/types";
 
 export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const router = useRouter();
-
-    const [products, setProducts] = useState<Product[]>(mockProducts);
+    const [stocks, setStocks] = useState<Stock[]>([]);
+    const [categories, setCategories] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const { addToCart } = useCart();
+    const { getToken } = useAuth();
 
-
-    // Función para sincronizar con localStorage
-    const syncWithLocalStorage = (updatedProducts: Product[]) => {
-        try {
-            localStorage.setItem('lista-productos', JSON.stringify(updatedProducts));
-            return true;
-        } catch (error) {
-            console.error('Error saving to localStorage:', error);
-            return false;
-        }
-    };
-
-    // Efecto para cargar productos al montar el componente
     useEffect(() => {
-        const loadProducts = () => {
+        const fetchCategoriesAndProducts = async () => {
             try {
-                const storedProducts = localStorage.getItem('lista-productos');
-                if (storedProducts) {
-                    setProducts(JSON.parse(storedProducts));
-                } else {
-                    syncWithLocalStorage(mockProducts);
-                    setProducts(mockProducts);
-                    Swal.fire({
-                        title: 'Inicialización',
-                        text: 'Se han cargado los productos iniciales',
-                        icon: 'info',
-                        timer: 1000,
-                        showConfirmButton: false
-                    });
+                const categoryResponse = await fetch(`${CONST.url}/categoriaProd/read-cp`);
+                if (!categoryResponse.ok) {
+                    throw new Error('Failed to fetch categories');
                 }
+                const categoryData: CategoryResponse = await categoryResponse.json();
+
+                const categoriesMap = categoryData.cps.reduce((acc, category) => ({
+                    ...acc,
+                    [category._id]: category.name
+                }), {});
+
+                setCategories(categoriesMap);
+
+                const productsResponse = await fetch(`${CONST.url}/stock/read-stockPOS/679b79e35bf0603cba16bb1f`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!productsResponse.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+
+                const data: StockResponse = await productsResponse.json();
+                setStocks(data.stocks);
             } catch (error) {
-                console.error('Error loading products:', error);
-                Swal.fire({
+                console.error('Error fetching data:', error);
+                await Swal.fire({
                     title: 'Error',
-                    text: 'Hubo un error al cargar los productos',
+                    text: 'No se pudieron cargar los productos',
                     icon: 'error',
                     confirmButtonText: 'Ok'
                 });
@@ -85,14 +58,14 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             }
         };
 
-        loadProducts();
+        fetchCategoriesAndProducts();
     }, []);
 
-    const handleEdit = (id: number) => {
+    const handleEdit = (id: string) => {
         router.push('/edit/' + id);
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         try {
             const result = await Swal.fire({
                 title: '¿Estás seguro?',
@@ -106,19 +79,25 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             });
 
             if (result.isConfirmed) {
-                const updatedProducts = products.filter(product => product.id !== id);
-                const success = syncWithLocalStorage(updatedProducts);
+                const response = await fetch(`${CONST.url}/product/delete-product/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`,
+                    },
+                });
 
-                if (success) {
-                    setProducts(updatedProducts);
-                    await Swal.fire(
-                        '¡Eliminado!',
-                        'El producto ha sido eliminado.',
-                        'success'
-                    );
-                } else {
-                    throw new Error('Error al sincronizar con localStorage');
+                if (!response.ok) {
+                    throw new Error('Failed to delete product');
                 }
+
+                setStocks(stocks.filter(stock => stock.idProduct._id !== id));
+
+                await Swal.fire(
+                    '¡Eliminado!',
+                    'El producto ha sido eliminado.',
+                    'success'
+                );
             }
         } catch (error) {
             console.error('Error deleting product:', error);
@@ -131,11 +110,20 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         }
     };
 
-    const handleAddToCart = (product: Product) => {
-        addToCart(product);
-        Swal.fire({
+    const handleAddToCart = async (stock: Stock) => {
+        const cartProduct = {
+            id: stock.idProduct._id,
+            name: stock.idProduct.name,
+            price: stock.idProduct.unitPrice,
+            image: stock.idProduct.image,
+            category: stock.idProduct.category,
+            amount: stock.amount
+        };
+
+        addToCart(cartProduct);
+        await Swal.fire({
             title: '¡Agregado!',
-            text: `${product.name} se ha agregado al carrito`,
+            text: `${stock.idProduct.name} se ha agregado al carrito`,
             icon: 'success',
             timer: 1500,
             position: 'top-end',
@@ -146,44 +134,56 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
+            <LoadingSpinner />
         );
     }
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {products.map((product) => (
-                <div key={product.id} className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <Image src={product.image} alt={product.name} width={192} height={192} className="w-full h-48 object-cover" />
+            {stocks.map((stock) => (
+                <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                    <Image
+                        src={stock.idProduct.image}
+                        alt={stock.idProduct.name}
+                        width={192}
+                        height={192}
+                        className="w-full h-48 object-cover"
+                    />
                     <div className="p-4">
-                        <h2 className="text-xl font-bold mb-2 text-[#789DBC]">{product.name}</h2>
-                        <p className="text-gray-600 mb-2">{product.category}</p>
-                        <p className="text-lg font-bold text-emerald-700">${product.price.toFixed(2)}</p>
+                        <h2 className="text-xl font-bold mb-2 text-[#789DBC]">
+                            {stock.idProduct.name}
+                        </h2>
+                        <div className="flex justify-between mb-2 text-gray-600">
+                            <span>{stock.idProduct.description}</span>
+                        </div>
+                        <p className="text-lg font-bold text-emerald-700">
+                            ${stock.idProduct.unitPrice.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-500">{categories[stock.idProduct.category] || 'Categoría N/A'}</p>
 
                         <div className="mt-4 space-y-2">
                             {!isAdmin && (
-                            <button
-                                onClick={() => handleAddToCart(product)}
-                                className="w-full flex items-center gap-2 justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-                            >
-                                <ShoppingCart size={20} />
-                                Agregar al Carrito
-                            </button>
+                                <button
+                                    onClick={() => handleAddToCart(stock)}
+                                    className="w-full flex items-center gap-2 justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                    disabled={stock.amount === 0}
+                                >
+                                    <ShoppingCart size={20} />
+                                    {stock.amount === 0 ? 'Sin Stock' : 'Agregar al Carrito'}
+                                </button>
                             )}
 
                             {isAdmin && (
                                 <div className="flex justify-between gap-2">
                                     <button
-                                        onClick={() => handleEdit(product.id)}
+                                        onClick={() => handleEdit(stock.idProduct._id)}
                                         className="flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded-lg transition-colors"
                                     >
                                         <Pencil size={20} />
                                         Editar
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(product.id)}
+                                        onClick={() => handleDelete(stock.idProduct._id)}
                                         className="flex items-center gap-2 bg-red-400 hover:bg-red-500 text-gray-100 font-bold py-2 px-4 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={20} />

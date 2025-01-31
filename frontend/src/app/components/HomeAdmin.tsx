@@ -11,4 +11,4 @@ function HomeAdmin({name}: {name:string}) {
         </div>
     );
 }
-export default withAuth(HomeAdmin, ['admin'])
+export default withAuth(HomeAdmin, ['Administrador']);

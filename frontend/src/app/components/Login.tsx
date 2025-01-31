@@ -9,32 +9,8 @@ import {LogInIcon} from "lucide-react";
 import Swal from "sweetalert2";
 import {CONST} from "@/app/constants";
 import Link from "next/link";
+import {ILoginInputs, IUserData, LoginResponse} from "@/app/types";
 
-interface ILoginInputs {
-    email: string;
-    pss: string;
-}
-
-interface LoginResponse {
-    error: boolean;
-    token: string;
-    rol: RoleResponse;
-    id: string;
-}
-
-interface RoleResponse {
-    state: string;
-    name: string;
-}
-
-interface IUserData {
-    usuarios: UserDataResponse;
-}
-
-interface UserDataResponse {
-    name: string;
-    email?: string;
-}
 const schema = yup.object().shape({
     email: yup
         .string()

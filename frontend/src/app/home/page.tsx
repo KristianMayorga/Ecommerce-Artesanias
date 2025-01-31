@@ -8,12 +8,13 @@ import {useAuth} from "@/app/context/AuthContext";
 
 export default function Home() {
 
-    const { user} = useAuth();
+    const {user} = useAuth();
 
     return (
         <ProtectedRoute>
         <div className="container mx-auto px-4">
-            {user?.role === 'admin' &&  <HomeAdmin name={user.name}/>}
+            {user?.role === 'Administrador' &&  <HomeAdmin name={user.name}/>}
+            {/* TODO Revisar roles */}
             {user?.role === 'vendedor' && <HomePOS name={user.name} />}
             {user?.role === 'cliente' && <HomeClient name={user.name} />}
         </div>

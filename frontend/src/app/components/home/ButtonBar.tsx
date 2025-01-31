@@ -20,7 +20,7 @@ const ButtonBar = () => {
 
     return (
         <div className="flex space-x-4 mb-6">
-            {user?.role === 'admin' && (
+            {user?.role === 'Administrador' && (
                 <div onClick={() => handleReports()} className={"cursor-pointer"}>
                     <div
                     className="flex items-center gap-2 px-4 py-2 bg-orange-300 hover:bg-orange-400 text-gray-600 rounded-lg transition-colors"
@@ -30,7 +30,7 @@ const ButtonBar = () => {
                     </div>
                 </div>
             )}
-            {user?.role === 'admin' && (
+            {user?.role === 'Administrador' && (
                 <Link href="/create">
                     <div
                         className="flex items-center gap-2 px-4 py-2 bg-green-300 hover:bg-green-400 text-gray-600 rounded-lg transition-colors"
@@ -48,7 +48,7 @@ const ButtonBar = () => {
                 Ver pedidos personalizados
             </div>
             </Link>
-            {user?.role === 'admin' && (
+            {user?.role === 'Administrador' && (
                 <Link href="/users">
                     <div
                         className="flex items-center gap-2 px-4 py-2 bg-purple-300 hover:bg-purple-400 text-gray-600 rounded-lg transition-colors"
