@@ -60,12 +60,14 @@ export interface ProductListProps {
     isAdmin?: boolean;
 }
 
-export interface Product {
-    id: number;
+// Crear Producto
+export interface ProductFormInputs {
     name: string;
-    price: number;
-    image: string;
+    unitPrice: number;
+    quali: number;
     category: string;
+    description: string;
+    image: FileList;
     amount: number;
 }
 

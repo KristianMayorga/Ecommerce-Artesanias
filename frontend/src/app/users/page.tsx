@@ -1,6 +1,6 @@
 'use client'
 
-import {useAuth, withAuth} from "@/app/context/AuthContext";
+import { withAuth } from "@/app/context/AuthContext";
 import ListaUsuarios from "@/app/components/ListaUsuarios";
 
 function UserList() {
@@ -12,4 +12,4 @@ function UserList() {
     );
 }
 
-export default withAuth(UserList, ['admin'])
+export default withAuth(UserList, ['Administrador']);
