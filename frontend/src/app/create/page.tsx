@@ -8,7 +8,8 @@ import Swal from 'sweetalert2';
 import { withAuth } from "@/app/context/AuthContext";
 import { useEffect, useState } from 'react';
 import { CONST } from "@/app/constants";
-import {Category, ProductFormInputs} from "@/app/types";
+import {Category, CategoryResponse, ProductFormInputs} from "@/app/types";
+import Image from 'next/image';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -33,14 +34,14 @@ const schema = yup.object().shape({
         .required('La descripción es requerida')
         .min(10, 'La descripción debe tener al menos 10 caracteres')
         .max(200, 'La descripción no puede exceder 200 caracteres'),
-    image: yup.mixed()
+    image: yup.mixed<FileList>()
         .required('La imagen es requerida')
         .test('fileSize', 'El archivo es demasiado grande (máximo 5MB)', (value) => {
-            if (!value || !value[0]) return true;
+            if (!value?.[0]) return true;
             return value[0].size <= MAX_FILE_SIZE;
         })
         .test('fileType', 'Formato de archivo no soportado', (value) => {
-            if (!value || !value[0]) return true;
+            if (!value?.[0]) return true;
             return ACCEPTED_IMAGE_TYPES.includes(value[0].type);
         }),
     amount: yup.number()
@@ -317,9 +318,11 @@ function CrearProducto() {
                     )}
                     {imagePreview && (
                         <div className="mt-2">
-                            <img
+                            <Image
                                 src={imagePreview}
                                 alt="Preview"
+                                width={128}
+                                height={128}
                                 className="h-32 w-32 object-cover rounded-lg"
                             />
                         </div>

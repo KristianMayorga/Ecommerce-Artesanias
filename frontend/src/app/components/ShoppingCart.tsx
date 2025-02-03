@@ -16,7 +16,7 @@ function ShoppingCart() {
         totalAmount
     } = useCart();
 
-    const handleRemoveItem = async (productId: number, productName: string) => {
+    const handleRemoveItem = async (productId: string, productName: string) => {
         const result = await Swal.fire({
             title: '¿Eliminar producto?',
             text: `¿Estás seguro de eliminar ${productName} del carrito?`,

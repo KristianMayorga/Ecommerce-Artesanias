@@ -6,9 +6,9 @@ import {SubmitHandler, useForm} from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Swal from 'sweetalert2';
-import { Product } from "@/app/components/ListaProductos";
 import { withAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { Product } from '@/app/types';
 
 type ProductFormInputs = Omit<Product, 'id'>;
 
@@ -62,7 +62,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
             }
 
             const products: Product[] = JSON.parse(storedProducts);
-            const product = products.find(p => p.id === Number(params.id));
+            const product = products.find(p => p.id === params.id);
 
             if (!product) {
                 router.push('/404');
@@ -91,7 +91,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
 
             const products: Product[] = JSON.parse(storedProducts);
             const updatedProducts = products.map(product =>
-                product.id === Number(params.id)
+                product.id === params.id
                     ? { ...product, ...data }
                     : product
             );

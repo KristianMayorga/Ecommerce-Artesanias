@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {Product} from "@/app/components/ListaProductos";
 import Swal from "sweetalert2";
+import {Product} from "@/app/types";
 
 interface CartItem extends Product {
     quantity: number;
@@ -9,8 +9,8 @@ interface CartItem extends Product {
 interface CartContextType {
     items: CartItem[];
     addToCart: (product: Product) => void;
-    removeFromCart: (productId: number) => void;
-    updateQuantity: (productId: number, quantity: number) => void;
+    removeFromCart: (productId: string) => void;
+    updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
     totalItems: number;
     totalAmount: number;
@@ -58,13 +58,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const removeFromCart = (productId: number) => {
+    const removeFromCart = (productId: string) => {
         setItems(currentItems =>
             currentItems.filter(item => item.id !== productId)
         );
     };
 
-    const updateQuantity = (productId: number, quantity: number) => {
+    const updateQuantity = (productId: string, quantity: number) => {
         if (quantity < 1) return;
         setItems(currentItems => {
             const itemToUpdate = currentItems.find(item => item.id === productId);
