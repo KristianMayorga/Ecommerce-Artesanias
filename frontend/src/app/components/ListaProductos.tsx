@@ -117,21 +117,31 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         router.push('/edit/' + id);
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (stock: Stock) => {
         try {
             const result = await Swal.fire({
-                title: '¿Estás seguro?',
-                text: "No podrás revertir esta acción",
+                title: '¿Qué deseas eliminar?',
+                html: `
+                    <p class="mb-4">Selecciona una opción para eliminar:</p>
+                    <p class="text-sm text-gray-600 mb-4">Producto: ${stock.idProduct.name}</p>
+                `,
                 icon: 'warning',
+                showDenyButton: true,
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
+                confirmButtonText: 'Solo el Stock',
+                denyButtonText: 'Stock y Producto',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                denyButtonColor: '#d33',
+                cancelButtonColor: '#6e7881'
             });
 
+            if (result.isDismissed) {
+                return;
+            }
+
             if (result.isConfirmed) {
-                const response = await fetch(`${CONST.url}/product/delete-product/${id}`, {
+                const stockResponse = await fetch(`${CONST.url}/stock/delete-stock/${stock._id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -139,23 +149,53 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                     },
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to delete product');
+                if (!stockResponse.ok) {
+                    throw new Error('Failed to delete stock');
                 }
 
-                setStocks(stocks.filter(stock => stock.idProduct._id !== id));
+                setStocks(stocks.filter(s => s._id !== stock._id));
 
-                await Swal.fire(
-                    '¡Eliminado!',
-                    'El producto ha sido eliminado.',
-                    'success'
-                );
+                await Swal.fire({
+                    title: '¡Stock Eliminado!',
+                    text: 'El stock ha sido eliminado exitosamente.',
+                    icon: 'success'
+                });
+            }
+
+            if (result.isDenied) {
+                const stockResponse = await fetch(`${CONST.url}/stock/delete-stock/${stock._id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`,
+                    },
+                });
+
+                const productResponse = await fetch(`${CONST.url}/product/delete-product/${stock.idProduct._id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`,
+                    },
+                });
+
+                if (!stockResponse.ok || !productResponse.ok) {
+                    throw new Error('Failed to delete stock and product');
+                }
+
+                setStocks(stocks.filter(s => s.idProduct._id !== stock.idProduct._id));
+
+                await Swal.fire({
+                    title: '¡Eliminados!',
+                    text: 'El stock y el producto han sido eliminados exitosamente.',
+                    icon: 'success'
+                });
             }
         } catch (error) {
-            console.error('Error deleting product:', error);
+            console.error('Error deleting:', error);
             await Swal.fire({
                 title: 'Error',
-                text: 'No se pudo eliminar el producto',
+                text: 'No se pudo completar la eliminación',
                 icon: 'error',
                 confirmButtonText: 'Ok'
             });
@@ -254,7 +294,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                             Editar
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(stock.idProduct._id)}
+                                            onClick={() => handleDelete(stock)}
                                             className="flex items-center gap-2 bg-red-400 hover:bg-red-500 text-gray-100 font-bold py-2 px-4 rounded-lg transition-colors"
                                         >
                                             <Trash2 size={20} />

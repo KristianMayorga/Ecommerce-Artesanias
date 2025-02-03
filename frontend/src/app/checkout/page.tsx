@@ -1,21 +1,40 @@
 'use client';
 
+import React, { useEffect, useState, useCallback } from "react";
 import { useCart } from "@/app/context/CartContext";
 import { useCheckout } from "@/app/context/CheckoutContext";
-import { useState } from "react";
+import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
 
-const CITIES = ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena'];
-const STORES = [
-    { id: '1', name: 'Tienda Centro', address: 'Carrera 7 #10-20, Bogotá, Colombia' },
-    { id: '2', name: 'Tienda Norte', address: 'Avenida Carrera 9 #140-15, Bogotá, Colombia' },
-    { id: '3', name: 'Tienda Sur', address: 'Calle 19 Sur #15-30, Bogotá, Colombia' },
-];
+interface POS {
+    _id: string;
+    name: string;
+    city: string;
+    state: boolean;
+    adress: string;
+    departament: number;
+}
+
+interface POSResponse {
+    posList: POS[];
+}
+
+const PAYMENT_PORTALS = {
+    CARD: "12345",
+    CASH: "67890"
+} as const;
+
+const PAYMENT_MEANS = {
+    CARD: "11111",
+    CASH: "22222"
+} as const;
 
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, totalAmount, clearCart } = useCart();
+    const { getToken, getUserId } = useAuth();
     const {
         shippingMethod,
         setShippingMethod,
@@ -29,29 +48,99 @@ export default function CheckoutPage() {
         setSelectedStore
     } = useCheckout();
 
+    const [stores, setStores] = useState<POS[]>([]);
+    const [cities, setCities] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const finalAmount = shippingMethod === 'delivery'
         ? totalAmount + 10
         : totalAmount;
 
+    // Memoized fetch function
+    const fetchStores = useCallback(async () => {
+        try {
+            const response = await fetch(`${CONST.url}/pos/read-pos`);
+            if (!response.ok) throw new Error('Failed to fetch stores');
+
+            const data: POSResponse = await response.json();
+            const activeStores = data.posList.filter(store => store.state);
+            setStores(activeStores);
+
+            // Extract unique cities using Array.from instead of spread operator
+            const uniqueCities = Array.from(new Set(activeStores.map(store => store.city)));
+            setCities(uniqueCities);
+        } catch (error) {
+            console.error('Error fetching stores:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar las tiendas',
+                icon: 'error'
+            });
+        }
+    }, []);
+
+    // Use effect with proper dependency
+    useEffect(() => {
+        fetchStores();
+    }, [fetchStores]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simular proceso de pago
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            const products = items.map(item => ({
+                idProduct: item.id,
+                quantity: item.quantity,
+                idPOS: selectedStore
+                    ? selectedStore
+                    : stores[0]?._id
+            }));
 
-        await Swal.fire({
-            title: '¡Compra exitosa!',
-            text: 'Tu pedido ha sido procesado correctamente',
-            icon: 'success',
-            confirmButtonText: 'Aceptar'
-        });
+            const totalTax = finalAmount * 0.19;
 
-        clearCart();
-        router.push('/home');
-        setIsLoading(false);
+            const paymentData = {
+                idPayPortal: paymentMethod === 'card' ? PAYMENT_PORTALS.CARD : PAYMENT_PORTALS.CASH,
+                idMeansOP: paymentMethod === 'card' ? PAYMENT_MEANS.CARD : PAYMENT_MEANS.CASH,
+                total: finalAmount,
+                totalTax: totalTax,
+                userId: getUserId(),
+                products: products
+            };
+
+            const response = await fetch(`${CONST.url}/payment/process-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Payment failed');
+            }
+
+            await Swal.fire({
+                title: '¡Compra exitosa!',
+                text: 'Tu pedido ha sido procesado correctamente',
+                icon: 'success',
+                confirmButtonText: 'Aceptar'
+            });
+
+            clearCart();
+            router.push('/home');
+        } catch (error) {
+            console.error('Error processing payment:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudo procesar el pago',
+                icon: 'error',
+                confirmButtonText: 'Ok'
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -118,9 +207,9 @@ export default function CheckoutPage() {
                                     required
                                 >
                                     <option value="">Selecciona una tienda</option>
-                                    {STORES.map(store => (
-                                        <option key={store.id} value={store.id}>
-                                            {store.name} - {store.address}
+                                    {stores.map(store => (
+                                        <option key={store._id} value={store._id}>
+                                            {store.name} - {store.adress}
                                         </option>
                                     ))}
                                 </select>
@@ -134,7 +223,7 @@ export default function CheckoutPage() {
                                     required
                                 >
                                     <option value="">Selecciona una ciudad</option>
-                                    {CITIES.map(city => (
+                                    {cities.map(city => (
                                         <option key={city} value={city}>{city}</option>
                                     ))}
                                 </select>
@@ -234,6 +323,5 @@ export default function CheckoutPage() {
                 </button>
             </form>
         </div>
-
     );
 }

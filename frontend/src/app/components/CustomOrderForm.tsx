@@ -39,7 +39,7 @@ const schema = yup.object().shape({
 
 export default function PedidoPersonalizado() {
     const router = useRouter();
-    const { getToken } = useAuth();
+    const { getToken, getUserId } = useAuth();
     const [loading, setLoading] = useState(false);
 
     const {
@@ -49,15 +49,6 @@ export default function PedidoPersonalizado() {
     } = useForm<CustomOrderInputs>({
         resolver: yupResolver(schema)
     });
-
-    const parseJwt = (token: string) => {
-        try {
-            return JSON.parse(atob(token.split('.')[1]));
-        } catch (e) {
-            console.log(e);
-            return null;
-        }
-    };
 
     const onSubmit: SubmitHandler<CustomOrderInputs> = async (data) => {
         try {
@@ -89,7 +80,7 @@ export default function PedidoPersonalizado() {
                     state: 'pendiente',
                     description: data.description,
                     budget: parseFloat(data.budget),
-                    userId: parseJwt(token).userId
+                    userId: getUserId()
                 })
             });
 

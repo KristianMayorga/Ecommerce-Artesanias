@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {ROLES} from "@/app/types";
+import {parseJwt} from "@/app/utils";
 
 interface UserData {
     name: string;
@@ -18,6 +19,7 @@ interface AuthContextType {
     isAdmin: boolean;
     checkPermission: (requiredRole: string) => boolean;
     getToken: () => string | null;
+    getUserId: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +65,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return localStorage.getItem('token');
     };
 
+    const getUserId = (): string | null => {
+        const token = getToken();
+        if (!token) return null;
+        return parseJwt(token).userId
+    }
+
     const isAdmin = user?.role === ROLES.ADMIN;
 
     const checkPermission = (requiredRole: string): boolean => {
@@ -79,7 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading,
             isAdmin,
             checkPermission,
-            getToken
+            getToken,
+            getUserId,
         }}>
             {children}
         </AuthContext.Provider>
