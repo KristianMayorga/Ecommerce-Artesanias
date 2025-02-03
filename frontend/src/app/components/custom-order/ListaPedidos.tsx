@@ -95,7 +95,6 @@ export default function ListaPedidos() {
             const response = await fetch(`${CONST.url}/personalization/update-personalization/${orderId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ state: newStatus })
