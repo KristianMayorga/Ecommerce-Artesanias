@@ -1,38 +1,24 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Swal from 'sweetalert2';
+import { useAuth } from "@/app/context/AuthContext";
+import { CONST } from "@/app/constants";
 
 type CustomOrderInputs = {
-    customerName: string;
-    email: string;
-    phone: string;
     category: string;
     description: string;
     budget: string;
-    preferredDeadline: string;
-    referenceImage?: string;
-    specialRequirements?: string;
 };
 
 const schema = yup.object().shape({
-    customerName: yup.string()
-        .required('El nombre es requerido')
-        .min(3, 'El nombre debe tener al menos 3 caracteres')
-        .max(50, 'El nombre no puede exceder 50 caracteres'),
-    email: yup.string()
-        .required('El email es requerido')
-        .email('Debe ser un email válido'),
-    phone: yup.string()
-        .required('El teléfono es requerido')
-        .matches(/^\+?[\d\s-]{8,}$/, 'Ingrese un número de teléfono válido'),
     category: yup.string()
         .required('La categoría es requerida')
-        .oneOf(['Cerámica', 'Textiles', 'Joyería', 'Madera', 'Cestería', 'Metal'], 'Categoría no válida'),
+        .oneOf(['Cerámica', 'Textiles', 'Joyería', 'Madera', 'Cestería', 'Metal', 'Diseño'], 'Categoría no válida'),
     description: yup.string()
         .required('La descripción es requerida')
         .min(20, 'La descripción debe tener al menos 20 caracteres')
@@ -49,81 +35,90 @@ const schema = yup.object().shape({
             const num = parseFloat(value);
             return num > 0;
         })
-        .test('min', 'El presupuesto mínimo es 10', value => {
-            if (!value) return false;
-            const num = parseFloat(value);
-            return num >= 10;
-        })
-        .test('max', 'El presupuesto máximo es 99999.99', value => {
-            if (!value) return false;
-            const num = parseFloat(value);
-            return num <= 99999.99;
-        }),
-    preferredDeadline: yup.string()
-        .required('La fecha de entrega preferida es requerida')
-        .test('is-future', 'La fecha debe ser al menos 1 semana después de hoy', value => {
-            if (!value) return false;
-            const date = new Date(value);
-            const minDate = new Date();
-            minDate.setDate(minDate.getDate() + 7);
-            return date >= minDate;
-        }),
-    referenceImage: yup.string()
-        .url('Debe ser una URL válida')
-        .optional(),
-    specialRequirements: yup.string()
-        .max(200, 'Los requisitos especiales no pueden exceder 200 caracteres')
-        .optional()
 });
 
 export default function PedidoPersonalizado() {
     const router = useRouter();
+    const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [minDate, setMinDate] = useState('');
 
-    useEffect(() => {
-        const date = new Date();
-        date.setDate(date.getDate() + 7);
-        setMinDate(date.toISOString().split('T')[0]);
-    }, []);
-
-    const {register, handleSubmit, formState: {errors}} = useForm<CustomOrderInputs>({
+    const {
+        register,
+        handleSubmit,
+        formState: { errors }
+    } = useForm<CustomOrderInputs>({
         resolver: yupResolver(schema)
     });
+
+    const parseJwt = (token: string) => {
+        try {
+            return JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+            console.log(e);
+            return null;
+        }
+    };
 
     const onSubmit: SubmitHandler<CustomOrderInputs> = async (data) => {
         try {
             setLoading(true);
+            const token = getToken();
 
-            const storedOrders = localStorage.getItem('pedidos-personalizados');
-            const orders = storedOrders ? JSON.parse(storedOrders) : [];
+            if (!token) {
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Debes iniciar sesión para realizar un pedido personalizado',
+                    icon: 'error',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+                router.push('/login');
+                return;
+            }
 
-            const newOrder = {
-                ...data,
-                budget: parseFloat(data.budget),
-                orderId: Date.now(),
-                status: 'pendiente',
-                orderDate: new Date().toISOString()
-            };
+            const response = await fetch(`${CONST.url}/personalization/add-personalization`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    category: data.category,
+                    state: 'pendiente',
+                    description: data.description,
+                    budget: parseFloat(data.budget),
+                    userId: parseJwt(token).userId
+                })
+            });
 
-            orders.push(newOrder);
-            localStorage.setItem('pedidos-personalizados', JSON.stringify(orders));
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al crear el pedido');
+            }
 
             await Swal.fire({
                 title: '¡Éxito!',
                 text: 'Tu pedido personalizado ha sido enviado. Nos pondremos en contacto contigo pronto.',
                 icon: 'success',
-                timer: 2500,
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
                 showConfirmButton: false
             });
 
-            router.push('/custom-order');
+            router.push('/home');
         } catch (error) {
+            console.error('Error al crear pedido:', error);
             await Swal.fire({
                 title: 'Error',
-                text: `Ocurrió un error al enviar tu pedido: ${error}`,
+                text: error instanceof Error ? error.message : 'Error al procesar tu pedido',
                 icon: 'error',
-                confirmButtonText: 'Ok'
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false
             });
         } finally {
             setLoading(false);
@@ -139,80 +134,28 @@ export default function PedidoPersonalizado() {
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre Completo
-                        </label>
-                        <input
-                            type="text"
-                            {...register('customerName')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        {errors.customerName && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.customerName.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            {...register('email')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        {errors.email && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.email.message}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono
-                        </label>
-                        <input
-                            type="tel"
-                            {...register('phone')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="+XX XXX XXX XXXX"
-                        />
-                        {errors.phone && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.phone.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Categoría de Artesanía
-                        </label>
-                        <select
-                            {...register('category')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Seleccione una categoría</option>
-                            <option value="Cerámica">Cerámica</option>
-                            <option value="Textiles">Textiles</option>
-                            <option value="Joyería">Joyería</option>
-                            <option value="Madera">Madera</option>
-                            <option value="Cestería">Cestería</option>
-                            <option value="Metal">Metal</option>
-                        </select>
-                        {errors.category && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.category.message}
-                            </p>
-                        )}
-                    </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Categoría de Artesanía
+                    </label>
+                    <select
+                        {...register('category')}
+                        className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Seleccione una categoría</option>
+                        <option value="Cerámica">Cerámica</option>
+                        <option value="Textiles">Textiles</option>
+                        <option value="Joyería">Joyería</option>
+                        <option value="Madera">Madera</option>
+                        <option value="Cestería">Cestería</option>
+                        <option value="Metal">Metal</option>
+                        <option value="Diseño">Diseño</option>
+                    </select>
+                    {errors.category && (
+                        <p className="mt-1 text-sm text-red-600">
+                            {errors.category.message}
+                        </p>
+                    )}
                 </div>
 
                 <div>
@@ -232,73 +175,20 @@ export default function PedidoPersonalizado() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Presupuesto (COP)
-                        </label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="10"
-                            max="99999.99"
-                            {...register('budget')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        {errors.budget && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.budget.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Fecha de entrega preferida
-                        </label>
-                        <input
-                            type="date"
-                            min={minDate}
-                            {...register('preferredDeadline')}
-                            className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        {errors.preferredDeadline && (
-                            <p className="mt-1 text-sm text-red-600">
-                                {errors.preferredDeadline.message}
-                            </p>
-                        )}
-                    </div>
-                </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        URL de imagen de referencia (opcional)
+                        Presupuesto (COP)
                     </label>
                     <input
-                        type="text"
-                        {...register('referenceImage')}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...register('budget')}
                         className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://ejemplo.com/imagen.jpg"
                     />
-                    {errors.referenceImage && (
+                    {errors.budget && (
                         <p className="mt-1 text-sm text-red-600">
-                            {errors.referenceImage.message}
-                        </p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Requisitos especiales (opcional)
-                    </label>
-                    <textarea
-                        {...register('specialRequirements')}
-                        rows={2}
-                        className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="¿Alguna consideración especial que debamos tener en cuenta?"
-                    />
-                    {errors.specialRequirements && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {errors.specialRequirements.message}
+                            {errors.budget.message}
                         </p>
                     )}
                 </div>
@@ -307,7 +197,7 @@ export default function PedidoPersonalizado() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                        className="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Enviando...' : 'Enviar Pedido'}
                     </button>

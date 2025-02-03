@@ -1,6 +1,7 @@
 import ListaProductos from "@/app/components/ListaProductos";
 import ShoppingCart from "@/app/components/ShoppingCart";
 import {withAuth} from "@/app/context/AuthContext";
+import {ROLES} from "@/app/types";
 
 function HomePOS({name}: {name:string}) {
     return (
@@ -21,4 +22,4 @@ function HomePOS({name}: {name:string}) {
     );
 }
 
-export default withAuth(HomePOS, ['vendedor'])
+export default withAuth(HomePOS, [ROLES.POS])

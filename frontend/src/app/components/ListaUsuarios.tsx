@@ -6,7 +6,7 @@ import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
 import { useAuth } from "@/app/context/AuthContext";
-import {ROLES} from "@/app/types";
+import { ROLES} from "@/app/types";
 
 interface Role {
     _id: string;
@@ -103,7 +103,7 @@ export default function UserManagement() {
             console.error('Error loading users:', error);
             await Swal.fire({
                 title: 'Error',
-                text: 'No se pudieron cargar los usuarios',
+                text: error instanceof Error ? error.message : 'Error al cargar los usuarios',
                 icon: 'error',
                 position: 'top-end',
                 toast: true,
