@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import { useCart } from "@/app/context/CartContext";
 import { useRouter } from 'next/navigation';
 import {withAuth} from "@/app/context/AuthContext";
+import {ROLES} from "@/app/types";
 
 
 function ShoppingCart() {
@@ -153,4 +154,4 @@ function ShoppingCart() {
     );
 }
 
-export default withAuth(ShoppingCart, ['cliente', 'vendedor'])
+export default withAuth(ShoppingCart, [ROLES.CLIENT, ROLES.POS])

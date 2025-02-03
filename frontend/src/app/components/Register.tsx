@@ -6,22 +6,19 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useRouter } from 'next/navigation';
 import Swal from "sweetalert2";
-import {CONST} from "@/app/constants";
+import { CONST } from "@/app/constants";
 import Link from "next/link";
 
 interface IFormInputs {
     name: string;
+    lastName: string;
     email: string;
-    password: string;
+    documentId: string;
+    pss: string;
     confirmPassword: string;
+    adress: string;
     phone: string;
-    role: string;
-}
-
-interface IRegisterRequest {
-    nombre: string;
-    email: string;
-    password: string;
+    dateOfBirth: string;
 }
 
 const schema = yup.object().shape({
@@ -29,34 +26,41 @@ const schema = yup.object().shape({
         .string()
         .trim()
         .matches(/^[a-zA-ZÀ-ÿ\s]+$/, 'El nombre solo puede contener letras')
-        .min(2, 'Debe tener al menos un nombre y un apellido')
-        .max(50, 'El nombre es muy largo')
+        .min(2, 'El nombre debe tener al menos 2 caracteres')
         .required('El nombre es obligatorio'),
+    lastName: yup
+        .string()
+        .trim()
+        .matches(/^[a-zA-ZÀ-ÿ\s]+$/, 'El apellido solo puede contener letras')
+        .min(2, 'El apellido debe tener al menos 2 caracteres')
+        .required('El apellido es obligatorio'),
     email: yup
         .string()
         .matches(/^[^@]+@[^@]+\.[a-zA-Z]{2,}$/, 'Debe ser un correo válido.')
         .required('El correo es obligatorio'),
-    password: yup
+    documentId: yup
         .string()
-        .matches(
-            /^(?=.*[0-9!@#$%^&]*)(?=\S+$).{6,}$/,
-            'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y uno de los siguientes caracteres especiales: @, $, !, %, *, ?, &'
-        )
+        .matches(/^\d{10,}$/, 'El documento debe tener al menos 10 dígitos')
+        .required('El documento es obligatorio'),
+    pss: yup
+        .string()
+        .min(8, 'La contraseña debe tener al menos 8 caracteres')
         .required('La contraseña es obligatoria'),
     confirmPassword: yup
         .string()
         .required('Confirma la contraseña')
-        .test('passwords-match', 'Las contraseñas no coinciden', function(value) {
-            return value === this.parent.password;
-        }),
+        .oneOf([yup.ref('pss')], 'Las contraseñas no coinciden'),
+    adress: yup
+        .string()
+        .required('La dirección es obligatoria'),
     phone: yup
         .string()
-        .matches(
-            /^(?!.*(\d)\1{9})(?!1234567890)\d{10}$/,
-            'El número debe tener 10 dígitos y no puede ser una secuencia repetitiva o simple'
-        )
-        .required('El número de teléfono es obligatorio'),
-    role: yup.string().default('cliente'),
+        .matches(/^\d{10}$/, 'El teléfono debe tener 10 dígitos')
+        .required('El teléfono es obligatorio'),
+    dateOfBirth: yup
+        .string()
+        .matches(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)')
+        .required('La fecha de nacimiento es obligatoria')
 });
 
 const Register: React.FC = () => {
@@ -71,58 +75,47 @@ const Register: React.FC = () => {
 
     const onSubmit: SubmitHandler<IFormInputs> = async (data) => {
         try {
-            const registerData: IRegisterRequest = {
-                nombre: data.name,
-                email: data.email,
-                password: data.password
-            };
-
-            const response = await fetch(`${CONST.url}/accounts/register/`, {
+            const response = await fetch(`${CONST.url}/usuario/add-clientes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(registerData),
+                body: JSON.stringify({
+                    name: data.name,
+                    lastName: data.lastName,
+                    email: data.email,
+                    documentId: data.documentId,
+                    pss: data.pss,
+                    adress: data.adress,
+                    phone: data.phone,
+                    dateOfBirth: data.dateOfBirth
+                }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-
-
-                if (errorData.detail) {
-                    await Swal.fire({
-                        title: '¡Error!',
-                        text: errorData.detail,
-                        icon: 'error',
-                        timer: 1500,
-                        position: 'top-end',
-                        toast: true,
-                        showConfirmButton: false
-                    });
-                } else {
-                    await Swal.fire({
-                        title: '¡Error!',
-                        text: 'Error de Registro',
-                        icon: 'error',
-                        timer: 1500,
-                        position: 'top-end',
-                        toast: true,
-                        showConfirmButton: false
-                    });
-                }
-
+                await Swal.fire({
+                    title: '¡Error!',
+                    text: errorData.message || 'Error en el registro',
+                    icon: 'error',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
                 return;
             }
 
             await Swal.fire({
                 title: '¡Registrado!',
-                text: `Registro Exitoso`,
+                text: 'Registro Exitoso',
                 icon: 'success',
                 timer: 1500,
                 position: 'top-end',
                 toast: true,
                 showConfirmButton: false
             });
+
             setTimeout(() => {
                 router.push('/login');
             }, 1500);
@@ -148,6 +141,17 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
+                    <label htmlFor="lastName" className="block mb-1 font-medium text-gray-800">Apellido</label>
+                    <input
+                        id="lastName"
+                        type="text"
+                        {...register('lastName')}
+                        className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+                </div>
+
+                <div>
                     <label htmlFor="email" className="block mb-1 font-medium text-gray-800">Correo</label>
                     <input
                         id="email"
@@ -159,7 +163,18 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="phone" className="block mb-1 font-medium text-gray-800">Número de Celular</label>
+                    <label htmlFor="documentId" className="block mb-1 font-medium text-gray-800">Documento de Identidad</label>
+                    <input
+                        id="documentId"
+                        type="text"
+                        {...register('documentId')}
+                        className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.documentId && <p className="text-red-500 text-sm mt-1">{errors.documentId.message}</p>}
+                </div>
+
+                <div>
+                    <label htmlFor="phone" className="block mb-1 font-medium text-gray-800">Teléfono</label>
                     <input
                         id="phone"
                         type="tel"
@@ -170,27 +185,47 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block mb-1 font-medium text-gray-800">Contraseña</label>
+                    <label htmlFor="adress" className="block mb-1 font-medium text-gray-800">Dirección</label>
                     <input
-                        id="password"
-                        type="password"
-                        {...register('password')}
+                        id="adress"
+                        type="text"
+                        {...register('adress')}
                         className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+                    {errors.adress && <p className="text-red-500 text-sm mt-1">{errors.adress.message}</p>}
                 </div>
 
                 <div>
-                    <label htmlFor="confirmPassword" className="block mb-1 font-medium text-gray-800">Confirmar
-                        Contraseña</label>
+                    <label htmlFor="dateOfBirth" className="block mb-1 font-medium text-gray-800">Fecha de Nacimiento</label>
+                    <input
+                        id="dateOfBirth"
+                        type="date"
+                        {...register('dateOfBirth')}
+                        className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth.message}</p>}
+                </div>
+
+                <div>
+                    <label htmlFor="pss" className="block mb-1 font-medium text-gray-800">Contraseña</label>
+                    <input
+                        id="pss"
+                        type="password"
+                        {...register('pss')}
+                        className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {errors.pss && <p className="text-red-500 text-sm mt-1">{errors.pss.message}</p>}
+                </div>
+
+                <div>
+                    <label htmlFor="confirmPassword" className="block mb-1 font-medium text-gray-800">Confirmar Contraseña</label>
                     <input
                         id="confirmPassword"
                         type="password"
                         {...register('confirmPassword')}
                         className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.confirmPassword &&
-                        <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
+                    {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
                 </div>
 
                 <button
@@ -201,8 +236,8 @@ const Register: React.FC = () => {
                     {isSubmitting ? 'Registrando...' : 'Registrarse'}
                 </button>
             </form>
-            <div className={"pt-6 text-gray-700"}>
-                <Link href={"/login"}>Ya tengo una cuenta!</Link>
+            <div className="pt-6 text-gray-700">
+                <Link href="/login">Ya tengo una cuenta!</Link>
             </div>
         </div>
     );

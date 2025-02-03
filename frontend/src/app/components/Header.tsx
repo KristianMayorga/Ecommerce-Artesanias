@@ -21,13 +21,12 @@ const Header = () => {
                 <Link href={"/home"}>
                     <div className="px-4 flex items-center">
                         <Image
-                            src="/images/logoArtesanias.svg"
+                            src="/images/LOGO-ARTESANIAS.png"
                             alt="Logo"
-                            width={40}
+                            width={300}
                             height={40}
                             className="mr-2"
                         />
-                        <h1 className="text-2xl font-bold">Artesanías Bogotá Ltda.</h1>
                     </div>
                 </Link>
 

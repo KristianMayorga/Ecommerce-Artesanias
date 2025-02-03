@@ -139,7 +139,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             {stocks.map((stock) => (
                 <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden">
                     <Image

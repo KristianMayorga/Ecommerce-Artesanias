@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import OrderForm from '@/app/components/CustomOrderForm';
 import {withAuth} from "@/app/context/AuthContext";
+import {ROLES} from "@/app/types";
 
 interface UserData {
     name: string;
-    role: 'admin' | 'cliente';
+    role: 'Administrador' | 'Cliente';
 }
 
 function NewCustomOrderPage() {
@@ -21,7 +22,7 @@ function NewCustomOrderPage() {
             return;
         }
         const parsedUserData = JSON.parse(storedUserData);
-        if (parsedUserData.role === 'admin') {
+        if (parsedUserData.role === ROLES.ADMIN) {
             router.push('/custom-order');
             return;
         }
@@ -33,4 +34,4 @@ function NewCustomOrderPage() {
     return <OrderForm />;
 }
 
-export default withAuth(NewCustomOrderPage, ['cliente', 'vendedor'])
+export default withAuth(NewCustomOrderPage, [ROLES.CLIENT, ROLES.POS])

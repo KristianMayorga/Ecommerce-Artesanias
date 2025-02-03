@@ -5,40 +5,75 @@ import { UserCircle, Pencil, Trash2, Plus } from "lucide-react";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
-import {useAuth} from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
+import {ROLES} from "@/app/types";
+
+interface Role {
+    _id: string;
+    state: boolean;
+    name: string;
+    __v?: number;
+}
+
+interface RolesResponse {
+    roles: Role[];
+}
 
 interface UserData {
-    id?: number;
-    nombre: string;
+    _id: string;
+    name: string;
+    lastName: string;
     email: string;
-    numero_de_celular: string;
-    rol: "admin" | "cliente" | "vendedor";
-    password?: string;
+    documentId: string;
+    phone: number;
+    adress: string;
+    dateOfBirth: string;
+    state: boolean;
+    rol: Role;
+    creationDate: string;
+    pss?: string;
+}
+
+interface UserFormData {
+    name: string;
+    lastName: string;
+    email: string;
+    documentId: string;
+    phone?: number;
+    adress: string;
+    dateOfBirth: string;
+    pss?: string;
+    rol?: string;
 }
 
 export default function UserManagement() {
     const [users, setUsers] = useState<UserData[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState<UserData | null>(null);
 
     const { getToken } = useAuth();
 
-    const [formData, setFormData] = useState<UserData>({
-        nombre: "",
+    const [formData, setFormData] = useState<UserFormData>({
+        name: "",
+        lastName: "",
         email: "",
-        password: "",
-        numero_de_celular: "",
-        rol: "cliente",
+        documentId: "",
+        phone: undefined,
+        adress: "",
+        dateOfBirth: "",
+        pss: "",
+        rol: "",
     });
 
-    const getRoleColorClasses = (role: string) => {
-        switch (role) {
-            case "admin":
+    const getRoleColorClasses = (roleName: string) => {
+        switch (roleName.toLowerCase()) {
+            case ROLES.ADMIN:
                 return "bg-red-100 text-red-800";
-            case "vendedor":
+            case ROLES.POS:
                 return "bg-blue-100 text-blue-800";
-            case "cliente":
+            case ROLES.CLIENT:
                 return "bg-green-100 text-green-800";
             default:
                 return "bg-gray-100 text-gray-800";
@@ -52,9 +87,9 @@ export default function UserManagement() {
                 throw new Error('No token found');
             }
 
-            const response = await fetch(`${CONST.url}/accounts/usuarios`, {
+            const response = await fetch(`${CONST.url}/usuario/read-usuario`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `${token}`
                 }
             });
 
@@ -63,7 +98,7 @@ export default function UserManagement() {
             }
 
             const data = await response.json();
-            setUsers(data);
+            setUsers(data.usuarios);
         } catch (error) {
             console.error('Error loading users:', error);
             await Swal.fire({
@@ -79,25 +114,62 @@ export default function UserManagement() {
         }
     };
 
+    const fetchRoles = async () => {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('No token found');
+            }
+
+            const response = await fetch(`${CONST.url}/rol/read-rol`, {
+                headers: {
+                    'Authorization': `${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch roles');
+            }
+
+            const data: RolesResponse = await response.json();
+            setRoles(data.roles);
+        } catch (error) {
+            console.error('Error loading roles:', error);
+        }
+    };
+
     useEffect(() => {
-        fetchUsers();
+        Promise.all([fetchUsers(), fetchRoles()]).finally(() => {
+            setIsLoading(false);
+        });
     }, []);
 
     const handleOpenModal = (user: UserData | null) => {
         if (user) {
             setCurrentUser(user);
             setFormData({
-                ...user,
-                password: ""
+                name: user.name,
+                lastName: user.lastName,
+                email: user.email,
+                documentId: user.documentId,
+                phone: user.phone,
+                adress: user.adress,
+                dateOfBirth: new Date(user.dateOfBirth).toISOString().split('T')[0],
+                pss: "",
+                rol: user.rol._id
             });
         } else {
             setCurrentUser(null);
             setFormData({
-                nombre: "",
+                name: "",
+                lastName: "",
                 email: "",
-                password: "",
-                numero_de_celular: "",
-                rol: "cliente",
+                documentId: "",
+                phone: undefined,
+                adress: "",
+                dateOfBirth: "",
+                pss: "",
+                rol: ""
             });
         }
         setIsModalOpen(true);
@@ -114,7 +186,7 @@ export default function UserManagement() {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: name === 'phone' ? Number(value) : value,
         }));
     };
 
@@ -136,49 +208,40 @@ export default function UserManagement() {
         try {
             let response;
             const headers = {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `${token}`,
                 'Content-Type': 'application/json'
             };
 
-            if (currentUser) {
-                const updateData = {
-                    nombre: formData.nombre,
-                    email: formData.email,
-                    rol: formData.rol,
-                    numero_de_celular: formData.numero_de_celular
-                };
+            const submitData = {
+                ...formData,
+                phone: Number(formData.phone)
+            };
 
-                response = await fetch(`${CONST.url}/accounts/usuarios/${currentUser.id}`, {
+            if (currentUser) {
+                response = await fetch(`${CONST.url}/usuario/update-usuario/${currentUser._id}`, {
                     method: 'PUT',
                     headers,
-                    body: JSON.stringify(updateData)
+                    body: JSON.stringify(submitData)
                 });
             } else {
-                response = await fetch(`${CONST.url}/accounts/usuarios`, {
+                response = await fetch(`${CONST.url}/usuario/add-usuario`, {
                     method: 'POST',
                     headers,
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(submitData)
                 });
             }
 
-            if (!response.ok) {
-
-                const res = await response.json();
-                let err: string | undefined;
-                if (res.email[0]){
-                    err = res.email[0]
-                }
-
+            if (!response?.ok) {
+                const errorData = await response?.json();
                 await Swal.fire({
                     title: 'Error',
-                    text: err || 'No se pudo guardar el usuario',
+                    text: errorData?.message || 'No se pudo guardar el usuario',
                     icon: 'error',
                     position: 'top-end',
                     toast: true,
                     timer: 3000
                 });
-
-                throw new Error('Failed to save user');
+                return;
             }
 
             await fetchUsers();
@@ -194,16 +257,16 @@ export default function UserManagement() {
             });
 
         } catch (error) {
-            console.log(error)
+            console.error('Error:', error);
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         const token = getToken();
         if (!token) return;
 
         try {
-            const response = await fetch(`${CONST.url}/accounts/usuarios/${id}`, {
+            const response = await fetch(`${CONST.url}/usuario/delete-usuario/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -218,13 +281,12 @@ export default function UserManagement() {
 
             await Swal.fire({
                 title: 'Éxito',
-                text: 'Usuario eliminado',
+                text: 'Usuario eliminado correctamente',
                 icon: 'success',
                 position: 'top-end',
                 toast: true,
                 timer: 3000
             });
-
         } catch (error) {
             console.error('Error deleting user:', error);
             await Swal.fire({
@@ -257,21 +319,23 @@ export default function UserManagement() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {users.map((user) => (
-                    <div key={user.id} className="bg-white shadow-md rounded-lg p-6">
+                    <div key={user._id} className="bg-white shadow-md rounded-lg p-6">
                         <div className="flex items-center gap-4 mb-4">
                             <UserCircle size={40} className="text-gray-400" />
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-600">{user.nombre}</h2>
+                                <h2 className="text-xl font-semibold text-gray-600">{user.name} {user.lastName}</h2>
                                 <p className="text-gray-600">{user.email}</p>
-                                <p className="text-gray-500 text-sm">Tel: {user.numero_de_celular}</p>
+                                <p className="text-gray-500 text-sm">Doc: {user.documentId}</p>
+                                <p className="text-gray-500 text-sm">Tel: {user.phone}</p>
+                                <p className="text-gray-500 text-sm">Dir: {user.adress}</p>
                             </div>
                         </div>
                         <div
                             className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColorClasses(
-                                user.rol
+                                user.rol.name
                             )} mb-4`}
                         >
-                            {user.rol}
+                            {user.rol.name}
                         </div>
                         <div className="flex gap-2 mt-4">
                             <button
@@ -282,7 +346,7 @@ export default function UserManagement() {
                                 <span>Editar</span>
                             </button>
                             <button
-                                onClick={() => user.id && handleDelete(user.id)}
+                                onClick={() => handleDelete(user._id)}
                                 className="flex-1 flex items-center justify-center gap-2 text-white font-bold bg-red-400 hover:bg-red-500 rounded-lg transition-colors"
                             >
                                 <Trash2 size={16} />
@@ -294,22 +358,35 @@ export default function UserManagement() {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white w-11/12 max-w-md mx-auto p-6 rounded-md">
-                        <h2 className="text-xl font-bold mb-4 text-gray-600">
-                            {currentUser ? "Editar Usuario" : "Agregar Nuevo Usuario"}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto">
+                    <div className="relative bg-white w-11/12 max-w-md mx-auto my-8 p-6 rounded-md">
+                        <div className="max-h-[80vh] overflow-y-auto">
+                            <h2 className="text-xl font-bold mb-4 text-gray-600">
+                                {currentUser ? "Editar Usuario" : "Agregar Nuevo Usuario"}
+                            </h2>
+                            <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-600">Nombre</label>
                                 <input
-                                    name="nombre"
+                                    name="name"
                                     type="text"
-                                    value={formData.nombre}
+                                    value={formData.name}
                                     onChange={handleInputChange}
                                     required
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-                                    placeholder="Nombre completo"
+                                    placeholder="Nombre"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-600">Apellido</label>
+                                <input
+                                    name="lastName"
+                                    type="text"
+                                    value={formData.lastName}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+                                    placeholder="Apellido"
                                 />
                             </div>
                             <div>
@@ -324,15 +401,27 @@ export default function UserManagement() {
                                     placeholder="correo@ejemplo.com"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-600">Documento de Identidad</label>
+                                <input
+                                    name="documentId"
+                                    type="text"
+                                    value={formData.documentId}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+                                    placeholder="Número de documento"
+                                />
+                            </div>
                             {!currentUser && (
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-600">
                                         Contraseña
                                     </label>
                                     <input
-                                        name="password"
+                                        name="pss"
                                         type="password"
-                                        value={formData.password}
+                                        value={formData.pss}
                                         onChange={handleInputChange}
                                         required={!currentUser}
                                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
@@ -342,16 +431,43 @@ export default function UserManagement() {
                             )}
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-600">
-                                    Número de Celular
+                                    Teléfono
                                 </label>
                                 <input
-                                    name="numero_de_celular"
-                                    type="text"
-                                    value={formData.numero_de_celular}
+                                    name="phone"
+                                    type="number"
+                                    value={formData.phone || ''}
                                     onChange={handleInputChange}
                                     required
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-                                    placeholder="0000000000"
+                                    placeholder="3001234567"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-600">
+                                    Dirección
+                                </label>
+                                <input
+                                    name="adress"
+                                    type="text"
+                                    value={formData.adress}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+                                    placeholder="Dirección"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-gray-600">
+                                    Fecha de Nacimiento
+                                </label>
+                                <input
+                                    name="dateOfBirth"
+                                    type="date"
+                                    value={formData.dateOfBirth}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
                                 />
                             </div>
                             <div>
@@ -360,11 +476,15 @@ export default function UserManagement() {
                                     name="rol"
                                     value={formData.rol}
                                     onChange={handleInputChange}
+                                    required
                                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
                                 >
-                                    <option value="admin">Administrador</option>
-                                    <option value="vendedor">Vendedor</option>
-                                    <option value="cliente">Cliente</option>
+                                    <option value="">Seleccione un rol</option>
+                                    {roles.map((role) => (
+                                        <option key={role._id} value={role._id}>
+                                            {role.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="flex justify-end mt-6">
@@ -377,12 +497,30 @@ export default function UserManagement() {
                                 </button>
                                 <button
                                     type="submit"
+                                    className="bg-blue-600 text-white px-4py-2 rounded-md hover:bg-blue-700"
+                                >
+                                    {currentUser ? "Guardar Cambios" : "Crear Usuario"}
+                                </button>
+                            </div>
+                            </form>
+                        </div>
+                        <div className="sticky bottom-0 pt-4 mt-6 bg-white border-t">
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
                                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                                 >
                                     {currentUser ? "Guardar Cambios" : "Crear Usuario"}
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}

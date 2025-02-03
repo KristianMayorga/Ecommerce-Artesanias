@@ -23,7 +23,7 @@ export default function RootLayout({
     return (
         <html lang="es">
         <body
-            className={`${rethink.className} antialiased flex flex-col w-full min-h-screen bg-[#FEF9F2]`}
+            className={`${rethink.className} antialiased flex flex-col w-full min-h-screen bg-[#F4F6FF]`}
         >
         <Providers>
             <Header />

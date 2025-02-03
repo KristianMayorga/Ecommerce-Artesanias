@@ -2,6 +2,7 @@ import ListaProductos from "@/app/components/ListaProductos";
 import ShoppingCart from "@/app/components/ShoppingCart";
 import {withAuth} from "@/app/context/AuthContext";
 import ButtonBar from "@/app/components/home/ButtonBar";
+import {ROLES} from "@/app/types";
 
 function HomeClient({name}: {name:string}) {
     return (
@@ -23,4 +24,4 @@ function HomeClient({name}: {name:string}) {
     );
 }
 
-export default withAuth(HomeClient, ['cliente'])
+export default withAuth(HomeClient, [ROLES.CLIENT])

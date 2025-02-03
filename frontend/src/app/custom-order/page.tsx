@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ListaPedidos from "@/app/components/custom-order/ListaPedidos";
+import {ROLES} from "@/app/types";
 
 interface UserData {
     name: string;
@@ -40,7 +41,7 @@ export default function CustomOrdersPage() {
                 <h1 className="text-2xl font-bold text-gray-800">
                     {userData?.role === 'admin' ? 'Gestión de Pedidos Personalizados' : 'Mis Pedidos Personalizados'}
                 </h1>
-                {userData?.role !== 'admin' && (
+                {userData?.role !== ROLES.ADMIN && (
                     <Link
                         href="/custom-order/new"
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"

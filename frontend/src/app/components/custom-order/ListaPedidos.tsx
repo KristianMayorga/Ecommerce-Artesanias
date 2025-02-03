@@ -76,7 +76,7 @@ export default function ListaPedidos() {
                             {
                                 text: commentText,
                                 date: new Date().toISOString(),
-                                author: isAdmin ? 'admin' : 'cliente'
+                                author: isAdmin ? 'Administrador' : 'Cliente'
                             }
                         ]
                     };

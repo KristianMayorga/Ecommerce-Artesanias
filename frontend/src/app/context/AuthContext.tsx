@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {ROLES} from "@/app/types";
 
 interface UserData {
     name: string;
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return localStorage.getItem('token');
     };
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === ROLES.ADMIN;
 
     const checkPermission = (requiredRole: string): boolean => {
         if (!user) return false;

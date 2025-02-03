@@ -1,3 +1,9 @@
+export const ROLES = {
+    ADMIN: 'Administrador',
+    CLIENT: 'Cliente',
+    POS: 'Vendedor'
+}
+
 // Login
 export interface ILoginInputs {
     email: string;
@@ -36,10 +42,21 @@ interface ProductResponse {
     image: string;
 }
 
+
+interface POS {
+    _id: string;
+    name: string;
+    city: string;
+    state: boolean;
+    adress: string;
+    departament: number;
+}
+
 export interface Stock {
     _id: string;
     amount: number;
     idProduct: ProductResponse;
+    idPOS: POS;
 }
 
 export interface StockResponse {
@@ -79,3 +96,9 @@ export interface Product {
     category: string;
     amount: number;
 }
+
+// Editar Producto
+export type StockFormField = {
+    amount: number;
+    stockId?: string;
+};
