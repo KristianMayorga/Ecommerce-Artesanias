@@ -504,23 +504,6 @@ export default function UserManagement() {
                             </div>
                             </form>
                         </div>
-                        <div className="sticky bottom-0 pt-4 mt-6 bg-white border-t">
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                                >
-                                    {currentUser ? "Guardar Cambios" : "Crear Usuario"}
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}
