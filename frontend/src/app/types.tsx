@@ -43,7 +43,7 @@ interface ProductResponse {
 }
 
 
-interface POS {
+export interface POS {
     _id: string;
     name: string;
     city: string;
@@ -88,6 +88,19 @@ export interface ProductFormInputs {
     amount: number;
 }
 
+export interface EditProductFormInputs {
+    name: string;
+    unitPrice: number;
+    category: string;
+    description: string;
+    image?: FileList;
+    stocks: StocksByPOS;
+}
+
+export interface StocksByPOS {
+    [posId: string]: StockData | undefined;
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -97,8 +110,7 @@ export interface Product {
     amount: number;
 }
 
-// Editar Producto
-export type StockFormField = {
-    amount: number;
+export interface StockData {
     stockId?: string;
-};
+    amount?: number;
+}

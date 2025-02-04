@@ -9,37 +9,11 @@ import Swal from 'sweetalert2';
 import { withAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
 import Image from 'next/image';
-import {Category, ROLES, Stock} from "@/app/types";
+import {Category, EditProductFormInputs, POS, ROLES, Stock, StockData, StocksByPOS} from "@/app/types";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-interface POS {
-    _id: string;
-    name: string;
-    city: string;
-    state: boolean;
-    adress: string;
-    departament: number;
-}
-
-interface ProductFormInputs {
-    name: string;
-    unitPrice: number;
-    category: string;
-    description: string;
-    image?: FileList;
-    stocks: StocksByPOS;
-}
-
-interface StockData {
-    stockId?: string;
-    amount?: number;
-}
-
-interface StocksByPOS {
-    [posId: string]: StockData | undefined;
-}
 
 type TestValue = {
     [key: string]: StockData;
@@ -85,7 +59,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
     const [isLoading, setIsLoading] = useState(true);
     const [currentImage, setCurrentImage] = useState<string>('');
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormInputs>({
+    const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<EditProductFormInputs>({
         resolver: yupResolver(schema)
     });
 
@@ -166,7 +140,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
         loadInitialData();
     }, [params.id, setValue, router]);
 
-    const onSubmit: SubmitHandler<ProductFormInputs> = async (data) => {
+    const onSubmit: SubmitHandler<EditProductFormInputs> = async (data) => {
         try {
             Swal.fire({
                 title: 'Actualizando producto',
