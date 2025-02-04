@@ -96,7 +96,7 @@ function ShoppingCart() {
                                 <h3 className="text-lg font-medium text-gray-800">{item.name}</h3>
                                 <p className="text-sm text-gray-500">{item.category}</p>
                                 <span className="text-lg font-medium text-emerald-600 mt-1 block">
-                                    ${item.price.toFixed(2)}
+                                    ${item.price.toLocaleString()}
                                 </span>
                             </div>
                         </div>
@@ -110,7 +110,7 @@ function ShoppingCart() {
                                 >
                                     <Minus className="w-5 h-5"/>
                                 </button>
-                                <span className="w-8 text-center font-medium">
+                                <span className="w-8 text-center font-medium text-gray-800">
                                     {item.quantity}
                                 </span>
                                 <button
@@ -122,7 +122,7 @@ function ShoppingCart() {
                             </div>
 
                             <span className="text-lg font-medium text-emerald-600 w-24 text-right">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                ${(item.price * item.quantity).toLocaleString()}
                             </span>
 
                             <button
@@ -140,7 +140,7 @@ function ShoppingCart() {
             <div className="mt-6">
                 <div className="flex justify-between items-center mb-6">
                     <span className="text-xl font-bold text-gray-800">Total</span>
-                    <span className="text-xl font-bold text-emerald-600">${totalAmount.toFixed(2)}</span>
+                    <span className="text-xl font-bold text-emerald-600">${totalAmount.toLocaleString()}</span>
                 </div>
                 <button
                     onClick={() => router.push('/checkout')}

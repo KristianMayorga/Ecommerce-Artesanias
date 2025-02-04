@@ -59,7 +59,7 @@ export default function CheckoutPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     const finalAmount = shippingMethod === 'delivery'
-        ? totalAmount + 10
+        ? totalAmount + 20000
         : totalAmount;
 
     const fetchStores = useCallback(async () => {
@@ -185,18 +185,18 @@ export default function CheckoutPage() {
                                     <p className="font-medium">{item.name}</p>
                                     <p className="text-sm text-gray-500">Cantidad: {item.quantity}</p>
                                 </div>
-                                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                                <p className="font-medium">${(item.price * item.quantity).toLocaleString()}</p>
                             </div>
                         ))}
                         {shippingMethod === 'delivery' && (
                             <div className="flex justify-between items-center pt-4 border-t">
                                 <p>Cargo por envío</p>
-                                <p>$10.00</p>
+                                <p>$20.000</p>
                             </div>
                         )}
                         <div className="flex justify-between items-center pt-4 border-t">
                             <p className="font-bold">Total</p>
-                            <p className="font-bold text-emerald-600">${finalAmount.toFixed(2)}</p>
+                            <p className="font-bold text-emerald-600">${finalAmount.toLocaleString()}</p>
                         </div>
                     </div>
                 </div>
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
                                 }`}
                                 onClick={() => setShippingMethod('delivery')}
                             >
-                                Envío a domicilio (+$10)
+                                Envío a domicilio (+$20.000)
                             </button>
                         </div>
 

@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
-import { Pencil, ShoppingCart, Trash2 } from "lucide-react";
+import {ChevronDown, Pencil, ShoppingCart, Trash2} from "lucide-react";
 import { CONST } from "@/app/constants";
 import { useAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
@@ -33,7 +33,6 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const { addToCart } = useCart();
     const { getToken } = useAuth();
 
-    // Fetch POS list
     useEffect(() => {
         const fetchPOSList = async () => {
             try {
@@ -43,11 +42,9 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 }
                 const data: POSResponse = await response.json();
 
-                // Filter only active POS
                 const activePOSList = data.posList.filter(pos => pos.state);
                 setPosList(activePOSList);
 
-                // Set default POS if available
                 if (activePOSList.length > 0) {
                     setSelectedPOS(activePOSList[0]._id);
                 }
@@ -65,7 +62,6 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         fetchPOSList();
     }, []);
 
-    // Fetch categories and products when selectedPOS changes
     useEffect(() => {
         const fetchCategoriesAndProducts = async () => {
             if (!selectedPOS) return;
@@ -208,7 +204,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             name: stock.idProduct.name,
             price: stock.idProduct.unitPrice,
             image: stock.idProduct.image,
-            category: stock.idProduct.category,
+            category: categories[stock.idProduct.category] || 'Categoría N/A',
             amount: stock.amount
         };
 
@@ -231,21 +227,36 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     return (
         <div className="space-y-6">
             <div className="w-full max-w-md">
-                <label htmlFor="pos-select" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="pos-select" className="block text-sm font-medium text-gray-700  mb-2">
                     Seleccionar Punto de Venta
                 </label>
-                <select
-                    id="pos-select"
-                    value={selectedPOS}
-                    onChange={(e) => setSelectedPOS(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                >
-                    {posList.map((pos) => (
-                        <option key={pos._id} value={pos._id}>
-                            {pos.name} - {pos.city}
-                        </option>
-                    ))}
-                </select>
+                <div className="relative">
+                    <select
+                        id="pos-select"
+                        value={selectedPOS}
+                        onChange={(e) => setSelectedPOS(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg
+                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                 bg-white
+                                 text-gray-900
+                                 shadow-sm appearance-none
+                                 hover:border-gray-400
+                                 cursor-pointer"
+                    >
+                        {posList.map((pos) => (
+                            <option
+                                key={pos._id}
+                                value={pos._id}
+                                className="bg-white  text-gray-900 "
+                            >
+                                {pos.name} - {pos.city}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronDown className={`w-4 h-4 text-gray-400 `} />
+                    </div>
+                </div>
             </div>
 
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>

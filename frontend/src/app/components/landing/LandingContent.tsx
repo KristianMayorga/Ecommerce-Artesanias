@@ -16,7 +16,7 @@ export default function Landing() {
     ];
 
     const STORES = [
-        { id: '1', name: 'Tienda Centro', address: 'Carrera 7 #10-20, Bogotá, Colombia' },
+        { id: '1', name: 'Tienda Centro', address: 'Cra. 7 #22-2a 22-98, Bogotá, Colombia' },
         { id: '2', name: 'Tienda Norte', address: 'Avenida Carrera 9 #140-15, Bogotá, Colombia' },
         { id: '3', name: 'Tienda Sur', address: 'Calle 19 Sur #15-30, Bogotá, Colombia' },
     ];
