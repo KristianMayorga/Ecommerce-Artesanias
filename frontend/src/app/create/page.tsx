@@ -8,11 +8,15 @@ import Swal from 'sweetalert2';
 import { withAuth } from "@/app/context/AuthContext";
 import { useEffect, useState } from 'react';
 import { CONST } from "@/app/constants";
-import {Category, CategoryResponse, ProductFormInputs, ROLES} from "@/app/types";
+import { Category, CategoryResponse, POS, ROLES, StockData, StocksByPOS } from "@/app/types";
 import Image from 'next/image';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+type TestValue = {
+    [key: string]: StockData;
+} | undefined;
 
 const schema = yup.object().shape({
     name: yup.string()
@@ -44,20 +48,37 @@ const schema = yup.object().shape({
             if (!value?.[0]) return true;
             return ACCEPTED_IMAGE_TYPES.includes(value[0].type);
         }),
-    amount: yup.number()
-        .required('La cantidad es requerida')
-        .positive('La cantidad debe de ser positiva')
-        .min(1, 'La cantidad mínima es 1')
-        .max(100, 'La cantidad maxima es 100')
-        .integer('La cantidad debe ser un número entero')
+    stocks: yup.object()
+        .test('stocks', 'Debe agregar stock en al menos una tienda', (value: TestValue) => {
+            if (!value) return false;
+            return Object.values(value).some(stock => stock && stock.amount && stock.amount > 0);
+        })
+        .test('stocks', 'Los stocks deben ser números positivos cuando se especifican', (value: TestValue) => {
+            if (!value) return true;
+            return Object.values(value).every((stock) => {
+                if (!stock || !stock.amount) return true;
+                return typeof stock.amount === 'number' && stock.amount > 0;
+            });
+        })
 });
+
+type CreateProductFormInputs = {
+    name: string;
+    unitPrice: number;
+    quali: number;
+    category: string;
+    description: string;
+    image: FileList;
+    stocks: StocksByPOS;
+};
 
 function CrearProducto() {
     const router = useRouter();
     const [categories, setCategories] = useState<Category[]>([]);
+    const [posList, setPOSList] = useState<POS[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const { register, handleSubmit, formState: { errors }, watch } = useForm<ProductFormInputs>({
+    const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<CreateProductFormInputs>({
         resolver: yupResolver(schema)
     });
 
@@ -75,19 +96,27 @@ function CrearProducto() {
     }, [selectedImage]);
 
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await fetch(`${CONST.url}/categoriaProd/read-cp`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch categories');
+                const [categoriesResponse, posResponse] = await Promise.all([
+                    fetch(`${CONST.url}/categoriaProd/read-cp`),
+                    fetch(`${CONST.url}/pos/read-pos`)
+                ]);
+
+                if (!categoriesResponse.ok || !posResponse.ok) {
+                    throw new Error('Error fetching initial data');
                 }
-                const data: CategoryResponse = await response.json();
-                setCategories(data.cps);
+
+                const categoriesData: CategoryResponse = await categoriesResponse.json();
+                const posData = await posResponse.json();
+
+                setCategories(categoriesData.cps);
+                setPOSList(posData.posList);
             } catch (error) {
-                console.error('Error fetching categories:', error);
+                console.error('Error fetching initial data:', error);
                 await Swal.fire({
                     title: 'Error',
-                    text: 'No se pudieron cargar las categorías',
+                    text: 'No se pudieron cargar los datos iniciales',
                     icon: 'error',
                     confirmButtonText: 'Ok'
                 });
@@ -96,12 +125,11 @@ function CrearProducto() {
             }
         };
 
-        fetchCategories();
+        fetchInitialData();
     }, []);
 
-    const onSubmit: SubmitHandler<ProductFormInputs> = async (data) => {
+    const onSubmit: SubmitHandler<CreateProductFormInputs> = async (data) => {
         try {
-            // Mostrar loading
             Swal.fire({
                 title: 'Creando producto',
                 text: 'Por favor espere...',
@@ -111,7 +139,6 @@ function CrearProducto() {
                 }
             });
 
-            // Crear FormData para el producto
             const formData = new FormData();
             formData.append('name', data.name);
             formData.append('unitPrice', data.unitPrice.toString());
@@ -121,7 +148,6 @@ function CrearProducto() {
             formData.append('state', 'true');
             formData.append('image', data.image[0]);
 
-            // Primer paso: Crear el producto
             const productResponse = await fetch(`${CONST.url}/product/add-product`, {
                 method: 'POST',
                 body: formData,
@@ -137,24 +163,26 @@ function CrearProducto() {
                 throw new Error(productData.message || 'Error creating product');
             }
 
-            const stockResponse = await fetch(`${CONST.url}/stock/add-stock`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    amount: data.amount,
-                    idProduct: productData.data._id,
-                    idPOS: "679b79e35bf0603cba16bb1f",
-                }),
-            });
+            // Crear stocks para cada POS donde se especificó una cantidad
+            const stockPromises = Object.entries(data.stocks || {}).map(([posId, stockData]) => {
+                if (!stockData || !stockData.amount) return null;
 
-            if (!stockResponse.ok) {
-                throw new Error('Failed to create stock');
-            }
+                return fetch(`${CONST.url}/stock/add-stock`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: stockData.amount,
+                        idProduct: productData.data._id,
+                        idPOS: posId,
+                    }),
+                });
+            }).filter(Boolean);
+
+            await Promise.all(stockPromises);
 
             Swal.close();
-
             await Swal.fire({
                 title: '¡Éxito!',
                 text: 'Producto creado correctamente',
@@ -167,7 +195,6 @@ function CrearProducto() {
         } catch (error) {
             console.error('Error creating product:', error);
             Swal.close();
-
             await Swal.fire({
                 title: 'Error',
                 text: 'Ocurrió un error al crear el producto',
@@ -189,6 +216,7 @@ function CrearProducto() {
         <div className="max-w-2xl mx-auto p-6 mt-6 bg-white shadow-md rounded-lg text-gray-600">
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Crear Producto</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Campos básicos del producto */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700">
                         Nombre
@@ -236,22 +264,6 @@ function CrearProducto() {
                     {errors.quali && (
                         <p className="mt-1 text-sm text-red-600">
                             {errors.quali.message}
-                        </p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Cantidad
-                    </label>
-                    <input
-                        type="number"
-                        {...register('amount')}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    {errors.amount && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {errors.amount.message}
                         </p>
                     )}
                 </div>
@@ -327,6 +339,59 @@ function CrearProducto() {
                     )}
                 </div>
 
+                {/* Sección de stocks por POS */}
+                <div className="mt-6">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Stock por Tienda</h2>
+                    <div className="space-y-4">
+                        {posList.map((pos) => (
+                            <div key={pos._id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="flex-1">
+                                    <p className="font-medium text-gray-900">{pos.name}</p>
+                                    <p className="text-sm text-gray-500">{pos.city}</p>
+                                </div>
+                                <div className="w-32">
+                                    {watch(`stocks.${pos._id}`) ? (
+                                        <div>
+                                            <input
+                                                type="number"
+                                                {...register(`stocks.${pos._id}.amount`)}
+                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                placeholder="Cantidad"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setValue(`stocks.${pos._id}`, undefined);
+                                                }}
+                                                className="text-xs text-red-600 hover:text-red-800 mt-1"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setValue(`stocks.${pos._id}`, { amount: 1 });
+                                            }}
+                                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Agregar stock
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {typeof errors.stocks?.message === 'string' && (
+                            <p className="mt-1 text-sm text-red-600">
+                                {errors.stocks.message}
+                            </p>
+                        )}
+                    </div>
+                </div>
                 <div className="flex gap-4">
                     <button
                         type="submit"
