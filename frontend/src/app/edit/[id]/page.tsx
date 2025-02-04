@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 import { withAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
 import Image from 'next/image';
-import {Category, ROLES, Stock, StockResponse} from "@/app/types";
+import {Category, ROLES, Stock} from "@/app/types";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -23,11 +23,6 @@ interface POS {
     departament: number;
 }
 
-interface StockData {
-    stockId?: string;
-    amount: number;
-}
-
 interface ProductFormInputs {
     name: string;
     unitPrice: number;
@@ -39,11 +34,11 @@ interface ProductFormInputs {
 
 interface StockData {
     stockId?: string;
-    amount: number;
+    amount?: number;
 }
 
 interface StocksByPOS {
-    [posId: string]: StockData;
+    [posId: string]: StockData | undefined;
 }
 
 type TestValue = {
@@ -74,15 +69,12 @@ const schema = yup.object().shape({
             if (!value?.[0]) return true;
             return ACCEPTED_IMAGE_TYPES.includes(value[0].type);
         }),
-    stocks: yup.object().test('stocks', 'Todas las cantidades deben ser mayores o iguales a 1', (value: TestValue): value is StocksByPOS => {
-        if (!value) return false;
-        return Object.values(value).every((stock) =>
-            typeof stock === 'object' &&
-            stock !== null &&
-            'amount' in stock &&
-            typeof stock.amount === 'number' &&
-            stock.amount >= 1
-        );
+    stocks: yup.object().test('stocks', 'Los stocks deben ser números positivos cuando se especifican', (value: TestValue) => {
+        if (!value) return true;
+        return Object.values(value).every((stock) => {
+            if (!stock || !stock.amount) return true; // Permitir valores undefined o sin amount
+            return typeof stock.amount === 'number' && stock.amount > 0;
+        });
     })
 });
 
@@ -97,7 +89,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
         resolver: yupResolver(schema)
     });
 
-    // Para preview de la imagen
     const selectedImage = watch('image');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -111,50 +102,52 @@ function EditarProducto({ params }: { params: { id: string } }) {
         }
     }, [selectedImage]);
 
-    // Cargar todos los POS y datos iniciales
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                // Cargar lista de POS
                 const posResponse = await fetch(`${CONST.url}/pos/read-pos`);
                 if (!posResponse.ok) throw new Error('Failed to fetch POS list');
                 const posData = await posResponse.json();
                 setPOSList(posData.posList);
 
-                // Cargar categorías
                 const categoriesResponse = await fetch(`${CONST.url}/categoriaProd/read-cp`);
                 if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
                 const categoriesData = await categoriesResponse.json();
                 setCategories(categoriesData.cps);
 
-                // Cargar producto
                 const productResponse = await fetch(`${CONST.url}/product/read-product/${params.id}`);
                 if (!productResponse.ok) throw new Error('Failed to fetch product');
                 const productData = await productResponse.json();
 
-                // Cargar stocks actuales
-                const stocksResponse = await fetch(`${CONST.url}/stock/read-stockPOS/679b79e35bf0603cba16bb1f`);
-                if (!stocksResponse.ok) throw new Error('Failed to fetch stocks');
-                const stocksData: StockResponse = await stocksResponse.json();
+                const stockPromises = posData.posList.map((pos: POS) =>
+                    fetch(`${CONST.url}/stock/read-stockPOS/${pos._id}`)
+                        .then(response => response.ok ? response.json() : null)
+                );
 
-                // Inicializar form con datos del producto
+                const allStocksResponses = await Promise.all(stockPromises);
+
                 setValue('name', productData.data.name);
                 setValue('unitPrice', productData.data.unitPrice);
                 setValue('category', productData.data.category);
                 setValue('description', productData.data.description);
                 setCurrentImage(productData.data.image);
 
-                // Inicializar stocks para cada POS
                 const initialStocks: StocksByPOS = {};
-                posData.posList.forEach((pos: POS) => {
-                    const existingStock = stocksData.stocks.find(
-                        (stock: Stock) => stock.idPOS._id === pos._id && stock.idProduct._id === params.id
-                    );
-                    initialStocks[pos._id] = {
-                        stockId: existingStock?._id,
-                        amount: existingStock?.amount || 1
-                    };
+                posData.posList.forEach((pos: POS, index: number) => {
+                    const stocksData = allStocksResponses[index];
+                    if (stocksData && stocksData.stocks) {
+                        const existingStock = stocksData.stocks.find(
+                            (stock: Stock) => stock.idProduct._id === params.id
+                        );
+                        if (existingStock) {
+                            initialStocks[pos._id] = {
+                                stockId: existingStock._id,
+                                amount: existingStock.amount
+                            };
+                        }
+                    }
                 });
+
                 setValue('stocks', initialStocks);
 
                 setIsLoading(false);
@@ -206,8 +199,9 @@ function EditarProducto({ params }: { params: { id: string } }) {
                 throw new Error('Failed to update product');
             }
 
-            // Actualizar o crear stocks para cada POS
-            const stockPromises = Object.entries(data.stocks).map(async ([posId, stockData]) => {
+            const stockPromises = Object.entries(data.stocks || {}).map(async ([posId, stockData]) => {
+                if (!stockData || !stockData.amount) return;
+
                 if (stockData.stockId) {
                     // Actualizar stock existente
                     return fetch(`${CONST.url}/stock/update-stock/${stockData.stockId}`, {
@@ -233,7 +227,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
                         }),
                     });
                 }
-            });
+            }).filter(Boolean);
 
             await Promise.all(stockPromises);
 
@@ -378,30 +372,74 @@ function EditarProducto({ params }: { params: { id: string } }) {
                 <div className="mt-6">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Stock por Tienda</h2>
                     <div className="space-y-4">
-                        {posList.map((pos) => (
-                            <div key={pos._id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900">{pos.name}</p>
-                                    <p className="text-sm text-gray-500">{pos.city}</p>
+                        {posList.map((pos) => {
+                            const currentStock = watch(`stocks.${pos._id}`);
+
+                            return (
+                                <div key={pos._id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex-1">
+                                        <p className="font-medium text-gray-900">{pos.name}</p>
+                                        <p className="text-sm text-gray-500">{pos.city}</p>
+                                    </div>
+                                    <div className="w-32">
+                                        {currentStock ? (
+                                            <>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Stock actual: {currentStock.amount}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    {...register(`stocks.${pos._id}.amount`)}
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                    placeholder="Agregar stock"
+                                                />
+                                                <input
+                                                    type="hidden"
+                                                    {...register(`stocks.${pos._id}.stockId`)}
+                                                />
+                                            </>
+                                        ) : (
+                                            <div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setValue(`stocks.${pos._id}`, { amount: 1 });
+                                                    }}
+                                                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Agregar stock
+                                                </button>
+                                                {watch(`stocks.${pos._id}`) && (
+                                                    <div className="mt-2">
+                                                        <input
+                                                            type="number"
+                                                            {...register(`stocks.${pos._id}.amount`)}
+                                                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                            placeholder="Cantidad"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setValue(`stocks.${pos._id}`, undefined);
+                                                            }}
+                                                            className="text-xs text-red-600 hover:text-red-800 mt-1"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="w-32">
-                                    <label className="sr-only">Cantidad</label>
-                                    <input
-                                        type="number"
-                                        {...register(`stocks.${pos._id}.amount`)}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        min="1"
-                                    />
-                                    <input
-                                        type="hidden"
-                                        {...register(`stocks.${pos._id}.stockId`)}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                        {errors.stocks && (
+                            );
+                        })}
+                        {typeof errors.stocks?.message === 'string' && (
                             <p className="mt-1 text-sm text-red-600">
-                                Todas las cantidades deben ser mayores o iguales a 1
+                                {errors.stocks.message}
                             </p>
                         )}
                     </div>
