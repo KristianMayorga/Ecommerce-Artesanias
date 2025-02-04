@@ -21,14 +21,19 @@ interface POSResponse {
     posList: POS[];
 }
 
+interface PaymentMethodAPI {
+    _id: string;
+    name: string;
+    state: boolean;
+}
+
+interface PaymentMethodsResponse {
+    mops: PaymentMethodAPI[];
+}
+
 const PAYMENT_PORTALS = {
     CARD: "12345",
     CASH: "67890"
-} as const;
-
-const PAYMENT_MEANS = {
-    CARD: "11111",
-    CASH: "22222"
 } as const;
 
 export default function CheckoutPage() {
@@ -50,13 +55,13 @@ export default function CheckoutPage() {
 
     const [stores, setStores] = useState<POS[]>([]);
     const [cities, setCities] = useState<string[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethodAPI[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const finalAmount = shippingMethod === 'delivery'
         ? totalAmount + 10
         : totalAmount;
 
-    // Memoized fetch function
     const fetchStores = useCallback(async () => {
         try {
             const response = await fetch(`${CONST.url}/pos/read-pos`);
@@ -66,7 +71,6 @@ export default function CheckoutPage() {
             const activeStores = data.posList.filter(store => store.state);
             setStores(activeStores);
 
-            // Extract unique cities using Array.from instead of spread operator
             const uniqueCities = Array.from(new Set(activeStores.map(store => store.city)));
             setCities(uniqueCities);
         } catch (error) {
@@ -79,10 +83,31 @@ export default function CheckoutPage() {
         }
     }, []);
 
-    // Use effect with proper dependency
+    const fetchPaymentMethods = useCallback(async () => {
+        try {
+            const response = await fetch(`${CONST.url}/mop/read-MOP`);
+            if (!response.ok) throw new Error('Failed to fetch payment methods');
+
+            const data: PaymentMethodsResponse = await response.json();
+            setPaymentMethods(data.mops);
+
+            if (!paymentMethod && data.mops.length > 0) {
+                setPaymentMethod(data.mops[0]._id);
+            }
+        } catch (error) {
+            console.error('Error fetching payment methods:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los métodos de pago',
+                icon: 'error'
+            });
+        }
+    }, [paymentMethod, setPaymentMethod]);
+
     useEffect(() => {
         fetchStores();
-    }, [fetchStores]);
+        fetchPaymentMethods();
+    }, [fetchStores, fetchPaymentMethods]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,10 +123,11 @@ export default function CheckoutPage() {
             }));
 
             const totalTax = finalAmount * 0.19;
+            const selectedPaymentMethod = paymentMethods.find(pm => pm._id === paymentMethod);
 
             const paymentData = {
-                idPayPortal: paymentMethod === 'card' ? PAYMENT_PORTALS.CARD : PAYMENT_PORTALS.CASH,
-                idMeansOP: paymentMethod === 'card' ? PAYMENT_MEANS.CARD : PAYMENT_MEANS.CASH,
+                idPayPortal: selectedPaymentMethod?.name === "Tarjeta" ? PAYMENT_PORTALS.CARD : PAYMENT_PORTALS.CASH,
+                idMeansOP: paymentMethod,
                 total: finalAmount,
                 totalTax: totalTax,
                 userId: getUserId(),
@@ -143,11 +169,13 @@ export default function CheckoutPage() {
         }
     };
 
+    const isCardPayment = paymentMethods.find(pm => pm._id === paymentMethod)?.name === "Tarjeta";
+
     return (
         <div className="max-w-4xl mx-auto p-6 text-gray-800">
             <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Resumen de productos */}
+                {/* Order Summary */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Resumen del pedido</h2>
                     <div className="space-y-4">
@@ -173,7 +201,7 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                {/* Método de envío */}
+                {/* Shipping Method */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Método de envío</h2>
                     <div className="space-y-4">
@@ -248,32 +276,26 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                {/* Método de pago */}
+                {/* Payment Method */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Método de pago</h2>
                     <div className="space-y-4">
                         <div className="flex gap-4">
-                            <button
-                                type="button"
-                                className={`flex-1 p-4 border rounded-lg ${
-                                    paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                                }`}
-                                onClick={() => setPaymentMethod('card')}
-                            >
-                                Tarjeta de crédito
-                            </button>
-                            <button
-                                type="button"
-                                className={`flex-1 p-4 border rounded-lg ${
-                                    paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                                }`}
-                                onClick={() => setPaymentMethod('cash')}
-                            >
-                                Pago contra entrega
-                            </button>
+                            {paymentMethods.map((method) => (
+                                <button
+                                    key={method._id}
+                                    type="button"
+                                    className={`flex-1 p-4 border rounded-lg ${
+                                        paymentMethod === method._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                                    }`}
+                                    onClick={() => setPaymentMethod(method._id)}
+                                >
+                                    {method.name}
+                                </button>
+                            ))}
                         </div>
 
-                        {paymentMethod === 'card' && (
+                        {isCardPayment && (
                             <div className="space-y-4">
                                 <input
                                     type="text"

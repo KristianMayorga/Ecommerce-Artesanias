@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 
 type ShippingMethod = 'store' | 'delivery';
-type PaymentMethod = 'card' | 'cash';
+type PaymentMethod = string;
 
 interface CheckoutContextType {
     shippingMethod: ShippingMethod;
