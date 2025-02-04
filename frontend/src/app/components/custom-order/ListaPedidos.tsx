@@ -6,24 +6,7 @@ import StatusBadge from "./StatusBadge";
 import { useAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
-
-interface User {
-    _id: string;
-    name: string;
-    lastName: string;
-    email: string;
-    phone: number;
-}
-
-interface Personalization {
-    _id: string;
-    category: string;
-    state: 'pendiente' | 'aceptado' | 'rechazado';
-    description: string;
-    budget: number;
-    userId: User;
-    date: string;
-}
+import {Personalization} from "@/app/types";
 
 export default function ListaPedidos() {
     const [orders, setOrders] = useState<Personalization[]>([]);

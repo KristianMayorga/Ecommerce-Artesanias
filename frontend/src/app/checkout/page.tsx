@@ -7,29 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
-
-interface POS {
-    _id: string;
-    name: string;
-    city: string;
-    state: boolean;
-    adress: string;
-    departament: number;
-}
-
-interface POSResponse {
-    posList: POS[];
-}
-
-interface PaymentMethodAPI {
-    _id: string;
-    name: string;
-    state: boolean;
-}
-
-interface PaymentMethodsResponse {
-    mops: PaymentMethodAPI[];
-}
+import {PaymentMethodAPI, PaymentMethodsResponse, POS, POSResponse} from "@/app/types";
 
 const PAYMENT_PORTALS = {
     CARD: "12345",

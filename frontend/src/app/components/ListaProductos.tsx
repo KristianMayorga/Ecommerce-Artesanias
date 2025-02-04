@@ -7,21 +7,7 @@ import {ChevronDown, Pencil, ShoppingCart, Trash2} from "lucide-react";
 import { CONST } from "@/app/constants";
 import { useAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
-import { CategoryResponse, ProductListProps, Stock, StockResponse } from "@/app/types";
-
-interface POS {
-    _id: string;
-    name: string;
-    city: string;
-    state: boolean;
-    adress: string;
-    departament: number;
-    __v: number;
-}
-
-interface POSResponse {
-    posList: POS[];
-}
+import {CategoryResponse, POS, POSResponse, ProductListProps, Stock, StockResponse} from "@/app/types";
 
 export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const router = useRouter();

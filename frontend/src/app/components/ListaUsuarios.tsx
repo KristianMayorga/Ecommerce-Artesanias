@@ -6,33 +6,7 @@ import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
 import { useAuth } from "@/app/context/AuthContext";
-import { ROLES} from "@/app/types";
-
-interface Role {
-    _id: string;
-    state: boolean;
-    name: string;
-    __v?: number;
-}
-
-interface RolesResponse {
-    roles: Role[];
-}
-
-interface UserData {
-    _id: string;
-    name: string;
-    lastName: string;
-    email: string;
-    documentId: string;
-    phone: number;
-    adress: string;
-    dateOfBirth: string;
-    state: boolean;
-    rol: Role;
-    creationDate: string;
-    pss?: string;
-}
+import {Role, ROLES, RolesResponse, UserData} from "@/app/types";
 
 interface UserFormData {
     name: string;

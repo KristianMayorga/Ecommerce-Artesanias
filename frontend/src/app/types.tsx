@@ -26,13 +26,13 @@ export interface IUserData {
     usuarios: UserDataResponse;
 }
 
-interface UserDataResponse {
+export interface UserDataResponse {
     name: string;
     email?: string;
 }
 
 // Lista Productos
-interface ProductResponse {
+export interface ProductResponse {
     _id: string;
     name: string;
     unitPrice: number;
@@ -42,7 +42,6 @@ interface ProductResponse {
     image: string;
 }
 
-
 export interface POS {
     _id: string;
     name: string;
@@ -50,6 +49,20 @@ export interface POS {
     state: boolean;
     adress: string;
     departament: number;
+}
+
+export interface POSResponse {
+    posList: POS[];
+}
+
+export interface PaymentMethodAPI {
+    _id: string;
+    name: string;
+    state: boolean;
+}
+
+export interface PaymentMethodsResponse {
+    mops: PaymentMethodAPI[];
 }
 
 export interface Stock {
@@ -113,4 +126,40 @@ export interface Product {
 export interface StockData {
     stockId?: string;
     amount?: number;
+}
+
+export interface Role {
+    _id: string;
+    state: boolean;
+    name: string;
+    __v?: number;
+}
+
+export interface RolesResponse {
+    roles: Role[];
+}
+
+export interface UserData {
+    _id: string;
+    name: string;
+    lastName: string;
+    email: string;
+    documentId: string;
+    phone: number;
+    adress: string;
+    dateOfBirth: string;
+    state: boolean;
+    rol: Role;
+    creationDate: string;
+    pss?: string;
+}
+
+export interface Personalization {
+    _id: string;
+    category: string;
+    state: 'pendiente' | 'aceptado' | 'rechazado';
+    description: string;
+    budget: number;
+    userId: UserData;
+    date: string;
 }
