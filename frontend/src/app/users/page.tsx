@@ -2,6 +2,7 @@
 
 import { withAuth } from "@/app/context/AuthContext";
 import ListaUsuarios from "@/app/components/ListaUsuarios";
+import {ROLES} from "@/app/types";
 
 function UserList() {
 
@@ -12,4 +13,4 @@ function UserList() {
     );
 }
 
-export default withAuth(UserList, ['Administrador']);
+export default withAuth(UserList, [ROLES.ADMIN]);

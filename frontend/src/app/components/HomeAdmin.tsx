@@ -1,6 +1,7 @@
 import ListaProductos from "@/app/components/ListaProductos";
 import {withAuth} from "@/app/context/AuthContext";
 import ButtonBar from "@/app/components/home/ButtonBar";
+import {ROLES} from "@/app/types";
 
 function HomeAdmin({name}: {name:string}) {
     return (
@@ -11,4 +12,4 @@ function HomeAdmin({name}: {name:string}) {
         </div>
     );
 }
-export default withAuth(HomeAdmin, ['Administrador']);
+export default withAuth(HomeAdmin, [ROLES.ADMIN]);

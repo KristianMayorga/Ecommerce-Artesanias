@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 import { withAuth } from "@/app/context/AuthContext";
 import { useEffect, useState } from 'react';
 import { CONST } from "@/app/constants";
-import {Category, CategoryResponse, ProductFormInputs} from "@/app/types";
+import {Category, CategoryResponse, ProductFormInputs, ROLES} from "@/app/types";
 import Image from 'next/image';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -61,7 +61,6 @@ function CrearProducto() {
         resolver: yupResolver(schema)
     });
 
-    // Para preview de la imagen
     const selectedImage = watch('image');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -138,7 +137,6 @@ function CrearProducto() {
                 throw new Error(productData.message || 'Error creating product');
             }
 
-            // Segundo paso: Crear el stock con el ID del producto
             const stockResponse = await fetch(`${CONST.url}/stock/add-stock`, {
                 method: 'POST',
                 headers: {
@@ -147,7 +145,7 @@ function CrearProducto() {
                 body: JSON.stringify({
                     amount: data.amount,
                     idProduct: productData.data._id,
-                    idPOS: "679b79e35bf0603cba16bb1f" // ID de la tienda central
+                    idPOS: "679b79e35bf0603cba16bb1f",
                 }),
             });
 
@@ -349,4 +347,4 @@ function CrearProducto() {
     );
 }
 
-export default withAuth(CrearProducto, ['Administrador']);
+export default withAuth(CrearProducto, [ROLES.ADMIN]);
