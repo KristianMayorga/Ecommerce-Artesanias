@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
 import {PaymentMethodAPI, PaymentMethodsResponse, POS, POSResponse} from "@/app/types";
+import { AnimatePresence, motion } from "motion/react";
+import PaymentProcessor from "@/app/components/PaymentProcessor";
 
 const PAYMENT_PORTALS = {
     CARD: "12345",
@@ -35,6 +37,7 @@ export default function CheckoutPage() {
     const [cities, setCities] = useState<string[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodAPI[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const finalAmount = shippingMethod === 'delivery'
         ? totalAmount + 20000
@@ -89,6 +92,7 @@ export default function CheckoutPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsProcessing(true);
         setIsLoading(true);
 
         try {
@@ -124,18 +128,9 @@ export default function CheckoutPage() {
             if (!response.ok) {
                 throw new Error('Payment failed');
             }
-
-            await Swal.fire({
-                title: '¡Compra exitosa!',
-                text: 'Tu pedido ha sido procesado correctamente',
-                icon: 'success',
-                confirmButtonText: 'Aceptar'
-            });
-
-            clearCart();
-            router.push('/home');
         } catch (error) {
             console.error('Error processing payment:', error);
+            setIsProcessing(false);
             await Swal.fire({
                 title: 'Error',
                 text: 'No se pudo procesar el pago',
@@ -151,7 +146,36 @@ export default function CheckoutPage() {
 
     return (
         <div className="max-w-4xl mx-auto p-6 text-gray-800">
-            <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
+            <AnimatePresence mode="wait">
+                {isProcessing ? (
+                        <PaymentProcessor
+                            onComplete={async () => {
+                                await Swal.fire({
+                                    title: '¡Compra exitosa!',
+                                    text: 'Tu pedido ha sido procesado correctamente',
+                                    icon: 'success',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                                clearCart();
+                                router.push('/home');
+                            }}
+                            onError={async (error) => {
+                                setIsProcessing(false);
+                                await Swal.fire({
+                                    title: 'Error',
+                                    text: `No se pudo procesar el pago (${error.message})`,
+                                    icon: 'error',
+                                    confirmButtonText: 'Ok'
+                                });
+                            }}
+                        />
+                    ): (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                    <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Order Summary */}
                 <div className="bg-white p-6 rounded-lg shadow">
@@ -322,6 +346,9 @@ export default function CheckoutPage() {
                     {isLoading ? 'Procesando...' : 'Confirmar y pagar'}
                 </button>
             </form>
+            </motion.div>
+            )}
+            </AnimatePresence>
         </div>
     );
 }
