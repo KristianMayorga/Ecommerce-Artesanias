@@ -349,13 +349,28 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
                 {stocks.map((stock) => (
                     <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden">
-                        <Image
-                            src={stock.idProduct.image}
-                            alt={stock.idProduct.name}
-                            width={192}
-                            height={192}
-                            className="w-full h-48 object-cover"
-                        />
+                        <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-tr from-gray-50 to-gray-100">
+                            <div className="absolute inset-0 backdrop-blur-sm">
+                                <Image
+                                    src={stock.idProduct.image}
+                                    alt={stock.idProduct.name}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="opacity-30 object-cover"
+                                    priority={false}
+                                />
+                            </div>
+                            <div className="relative h-full w-full flex items-center justify-center">
+                                <Image
+                                    src={stock.idProduct.image}
+                                    alt={stock.idProduct.name}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-contain p-2"
+                                    priority={false}
+                                />
+                            </div>
+                        </div>
                         <div className="p-4">
                             <h2 className="text-xl font-bold mb-2 text-[#789DBC]">
                                 {stock.idProduct.name}
@@ -370,7 +385,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                 {!isAdmin && (
                                     <div onClick={() => handleSaveWish(stock.idProduct)}>
                                         {validateWishProduct(stock.idProduct._id)
-                                            ? <Heart fill={"red"} size={20} className="text-red-500"/>
+                                            ? <Heart fill="red" size={20} className="text-red-500"/>
                                             : <Heart size={20} className="text-red-700"/>}
                                     </div>
                                 )}
@@ -383,7 +398,9 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                 {!isAdmin && (
                                     <button
                                         onClick={() => handleAddToCart(stock)}
-                                        className={`w-full flex items-center gap-2 justify-center ${stock.amount === 0 ? "bg-gray-300" : "bg-blue-500 hover:bg-blue-600"} text-white font-bold py-2 px-4 rounded-lg transition-colors`}
+                                        className={`w-full flex items-center gap-2 justify-center ${
+                                            stock.amount === 0 ? "bg-gray-300" : "bg-blue-500 hover:bg-blue-600"
+                                        } text-white font-bold py-2 px-4 rounded-lg transition-colors`}
                                         disabled={stock.amount === 0}
                                     >
                                         {stock.amount === 0 ? <Ban size={20} /> : <ShoppingCart size={20} />}
