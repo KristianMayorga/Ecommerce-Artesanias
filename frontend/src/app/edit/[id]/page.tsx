@@ -47,7 +47,7 @@ const schema = yup.object().shape({
         if (!value) return true;
         return Object.values(value).every((stock) => {
             if (!stock || !stock.amount) return true; // Permitir valores undefined o sin amount
-            return typeof stock.amount === 'number' && stock.amount > 0;
+            return stock.amount > 0;
         });
     })
 });
