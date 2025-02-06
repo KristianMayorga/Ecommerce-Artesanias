@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import Swal from 'sweetalert2';
 import Image from "next/image";
 import {useCart} from "@/app/context/CartContext";
-import {Pencil, ShoppingCart, Trash2} from "lucide-react";
+import { ShoppingCart, Trash2} from "lucide-react";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import {Product} from "@/app/types";
 
@@ -50,7 +50,7 @@ export default function ListaDeseos() {
     }, []);
 
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         try {
             const result = await Swal.fire({
                 title: '¿Estás seguro?',
@@ -119,7 +119,7 @@ export default function ListaDeseos() {
                         <div className="p-4">
                             <h2 className="text-xl font-bold mb-2 text-[#789DBC]">{product.name}</h2>
                             <p className="text-gray-600 mb-2">{product.category}</p>
-                            <p className="text-lg font-bold text-emerald-700">${product.price.toFixed(2)}</p>
+                            <p className="text-lg font-bold text-emerald-700">${product.price.toLocaleString()}</p>
 
                             <div className="mt-4 space-y-2">
                                     <button

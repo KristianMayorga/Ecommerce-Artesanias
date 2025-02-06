@@ -3,21 +3,35 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
-import {ChevronDown, Pencil, ShoppingCart, Trash2} from "lucide-react";
+import {ChevronDown, Heart, Pencil, ShoppingCart, Trash2} from "lucide-react";
 import { CONST } from "@/app/constants";
 import { useAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
-import {CategoryResponse, POS, POSResponse, ProductListProps, Stock, StockResponse} from "@/app/types";
+import {
+    CategoryResponse,
+    POS,
+    POSResponse, Product,
+    ProductListProps,
+    ProductResponse,
+    Stock,
+    StockResponse
+} from "@/app/types";
 
 export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const router = useRouter();
     const [stocks, setStocks] = useState<Stock[]>([]);
+    const [wishedProducts, setWishedProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [posList, setPosList] = useState<POS[]>([]);
     const [selectedPOS, setSelectedPOS] = useState<string>("");
     const { addToCart } = useCart();
     const { getToken } = useAuth();
+
+    const validateWishProduct = (id: string) => {
+        const wished = wishedProducts.find(wish => wish.id === id);
+        return wished ? true : false;
+    }
 
     useEffect(() => {
         const fetchPOSList = async () => {
@@ -94,6 +108,68 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
         fetchCategoriesAndProducts();
     }, [selectedPOS]);
+
+    const handleSaveWish = async (product: ProductResponse) => {
+        try {
+            const findWish = wishedProducts.find(wish => wish.id === product._id);
+
+            const uniqueWishes = wishedProducts.filter(wish => wish.id !== product._id);
+
+            if (findWish) {
+                localStorage.setItem('lista-deseos', JSON.stringify(uniqueWishes));
+                setWishedProducts(uniqueWishes);
+
+                await Swal.fire({
+                    title: '¡Eliminado!',
+                    text: `${product.name} se ha eliminado a la lista de deseos`,
+                    icon: 'info',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+            } else{
+
+                const savedProduct: Product = {
+                    id: product._id,
+                    name: product.name,
+                    price: product.unitPrice,
+                    image: product.image,
+                    category: categories[product.category] || 'Categoría N/A', //TODO: Migrar al cartContext
+                    amount: 1, //TODO: Validar para que ??? y deprecar
+                };
+
+
+                uniqueWishes.push(savedProduct);
+                localStorage.setItem('lista-deseos', JSON.stringify(uniqueWishes));
+                setWishedProducts(uniqueWishes);
+
+                await Swal.fire({
+                    title: '¡Agregado!',
+                    text: `${product.name} se ha agregado a la lista de deseos`,
+                    icon: 'success',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+            }
+
+
+
+
+        } catch (error) {
+            await       Swal.fire({
+                title: '¡Error!',
+                text: `${error}`,
+                icon: 'error',
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false
+            });
+        }
+    };
 
     const handleEdit = (id: string) => {
         router.push('/edit/' + id);
@@ -262,9 +338,18 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                             <div className="flex justify-between mb-2 text-gray-600">
                                 <span>{stock.idProduct.description}</span>
                             </div>
-                            <p className="text-lg font-bold text-emerald-700">
-                                ${stock.idProduct.unitPrice.toLocaleString()}
-                            </p>
+                            <div className="flex justify-between">
+                                <p className="text-lg font-bold text-emerald-700">
+                                    ${stock.idProduct.unitPrice.toLocaleString()}
+                                </p>
+                                {!isAdmin && (
+                                    <div onClick={() => handleSaveWish(stock.idProduct)}>
+                                        {validateWishProduct(stock.idProduct._id)
+                                            ? <Heart fill={"red"} size={20} className="text-red-500"/>
+                                            : <Heart size={20} className="text-red-700"/>}
+                                    </div>
+                                )}
+                            </div>
                             <p className="text-sm text-gray-500">
                                 {categories[stock.idProduct.category] || 'Categoría N/A'}
                             </p>
