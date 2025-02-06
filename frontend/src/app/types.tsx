@@ -120,7 +120,6 @@ export interface Product {
     price: number;
     image: string;
     category: string;
-    amount: number;
 }
 
 export interface StockData {
@@ -162,4 +161,13 @@ export interface Personalization {
     budget: number;
     userId: UserData;
     date: string;
+}
+
+export interface WishlistResponse {
+    wl: WishlistItem[];
+}
+
+export interface WishlistItem {
+    _id: string;
+    productId: ProductResponse;
 }

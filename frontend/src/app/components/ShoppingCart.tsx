@@ -95,6 +95,7 @@ function ShoppingCart() {
                             <div className="flex-1">
                                 <h3 className="text-lg font-medium text-gray-800">{item.name}</h3>
                                 <p className="text-sm text-gray-500">{item.category}</p>
+                                <p className="text-sm text-gray-500">{item.storeName}</p>
                                 <span className="text-lg font-medium text-emerald-600 mt-1 block">
                                     ${item.price.toLocaleString()}
                                 </span>
@@ -104,7 +105,7 @@ function ShoppingCart() {
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-3">
                                 <button
-                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                    onClick={() => updateQuantity(item.id, item.storeId, item.quantity - 1)}
                                     className="text-gray-500 hover:text-gray-700"
                                     disabled={item.quantity <= 1}
                                 >
@@ -114,7 +115,7 @@ function ShoppingCart() {
                                     {item.quantity}
                                 </span>
                                 <button
-                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                    onClick={() => updateQuantity(item.id, item.storeId, item.quantity + 1)}
                                     className="text-gray-500 hover:text-gray-700"
                                 >
                                     <Plus className="w-5 h-5"/>

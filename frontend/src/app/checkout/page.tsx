@@ -99,9 +99,7 @@ export default function CheckoutPage() {
             const products = items.map(item => ({
                 idProduct: item.id,
                 quantity: item.quantity,
-                idPOS: selectedStore
-                    ? selectedStore
-                    : stores[0]?._id
+                idPOS: item.storeId,
             }));
 
             const totalTax = finalAmount * 0.19;
@@ -186,6 +184,7 @@ export default function CheckoutPage() {
                                 <div>
                                     <p className="font-medium">{item.name}</p>
                                     <p className="text-sm text-gray-500">Cantidad: {item.quantity}</p>
+                                    <p className="text-sm text-gray-500">Tienda: {item.storeName}</p>
                                 </div>
                                 <p className="font-medium">${(item.price * item.quantity).toLocaleString()}</p>
                             </div>

@@ -57,7 +57,7 @@ const schema = yup.object().shape({
             if (!value) return true;
             return Object.values(value).every((stock) => {
                 if (!stock || !stock.amount) return true;
-                return typeof stock.amount === 'number' && stock.amount > 0;
+                return stock.amount > 0;
             });
         })
 });
@@ -129,6 +129,7 @@ function CrearProducto() {
     }, []);
 
     const onSubmit: SubmitHandler<CreateProductFormInputs> = async (data) => {
+        console.log('Form data:', data);
         try {
             Swal.fire({
                 title: 'Creando producto',

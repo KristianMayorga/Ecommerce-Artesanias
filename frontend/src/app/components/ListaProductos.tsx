@@ -3,35 +3,34 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
-import {ChevronDown, Heart, Pencil, ShoppingCart, Trash2} from "lucide-react";
+import {Ban, ChevronDown, Heart, Pencil, ShoppingCart, Trash2} from "lucide-react";
 import { CONST } from "@/app/constants";
 import { useAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import {
     CategoryResponse,
     POS,
-    POSResponse, Product,
+    POSResponse,
     ProductListProps,
     ProductResponse,
     Stock,
-    StockResponse
+    StockResponse, WishlistItem, WishlistResponse
 } from "@/app/types";
 
 export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const router = useRouter();
     const [stocks, setStocks] = useState<Stock[]>([]);
-    const [wishedProducts, setWishedProducts] = useState<Product[]>([]);
+    const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
     const [categories, setCategories] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [posList, setPosList] = useState<POS[]>([]);
     const [selectedPOS, setSelectedPOS] = useState<string>("");
     const { addToCart } = useCart();
-    const { getToken } = useAuth();
+    const { getToken, getUserId } = useAuth();
 
-    const validateWishProduct = (id: string) => {
-        const wished = wishedProducts.find(wish => wish.id === id);
-        return wished ? true : false;
-    }
+    const validateWishProduct = (productId: string) => {
+        return wishlist.some(wish => wish.productId?._id === productId);
+    };
 
     useEffect(() => {
         const fetchPOSList = async () => {
@@ -58,6 +57,28 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 });
             }
         };
+
+        const fetchWishlist = async () => {
+            try {
+                const response = await fetch(`${CONST.url}/wishlist/read-wishlist`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch wishlist');
+                }
+
+                const data: WishlistResponse = await response.json();
+                setWishlist(data.wl.filter(item => item.productId !== null));
+            } catch (error) {
+                console.error('Error loading wishlist:', error);
+            }
+        };
+
+        fetchWishlist();
 
         fetchPOSList();
     }, []);
@@ -111,38 +132,54 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
     const handleSaveWish = async (product: ProductResponse) => {
         try {
-            const findWish = wishedProducts.find(wish => wish.id === product._id);
+            const isWished = validateWishProduct(product._id);
 
-            const uniqueWishes = wishedProducts.filter(wish => wish.id !== product._id);
+            if (isWished) {
+                const wishItem = wishlist.find(wish => wish.productId?._id === product._id);
+                if (!wishItem) return;
 
-            if (findWish) {
-                localStorage.setItem('lista-deseos', JSON.stringify(uniqueWishes));
-                setWishedProducts(uniqueWishes);
+                const response = await fetch(`${CONST.url}/wishlist/delete-wishList/${wishItem._id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove from wishlist');
+                }
+
+                setWishlist(prev => prev.filter(wish => wish._id !== wishItem._id));
 
                 await Swal.fire({
                     title: '¡Eliminado!',
-                    text: `${product.name} se ha eliminado a la lista de deseos`,
+                    text: `${product.name} se ha eliminado de la lista de deseos`,
                     icon: 'info',
                     timer: 1500,
                     position: 'top-end',
                     toast: true,
                     showConfirmButton: false
                 });
-            } else{
+            } else {
+                const response = await fetch(`${CONST.url}/wishlist/add-wishList`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId: product._id,
+                        userId: getUserId(),
+                    })
+                });
 
-                const savedProduct: Product = {
-                    id: product._id,
-                    name: product.name,
-                    price: product.unitPrice,
-                    image: product.image,
-                    category: categories[product.category] || 'Categoría N/A', //TODO: Migrar al cartContext
-                    amount: 1, //TODO: Validar para que ??? y deprecar
-                };
+                if (!response.ok) {
+                    throw new Error('Failed to add to wishlist');
+                }
 
-
-                uniqueWishes.push(savedProduct);
-                localStorage.setItem('lista-deseos', JSON.stringify(uniqueWishes));
-                setWishedProducts(uniqueWishes);
+                const data = await response.json();
+                setWishlist(prev => [...prev, data.data]);
 
                 await Swal.fire({
                     title: '¡Agregado!',
@@ -154,14 +191,11 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                     showConfirmButton: false
                 });
             }
-
-
-
-
         } catch (error) {
-            await       Swal.fire({
+            console.error('Error managing wishlist:', error);
+            await Swal.fire({
                 title: '¡Error!',
-                text: `${error}`,
+                text: `Hubo un error al gestionar la lista de deseos`,
                 icon: 'error',
                 timer: 1500,
                 position: 'top-end',
@@ -261,16 +295,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     };
 
     const handleAddToCart = async (stock: Stock) => {
-        const cartProduct = {
-            id: stock.idProduct._id,
-            name: stock.idProduct.name,
-            price: stock.idProduct.unitPrice,
-            image: stock.idProduct.image,
-            category: categories[stock.idProduct.category] || 'Categoría N/A',
-            amount: stock.amount
-        };
-
-        addToCart(cartProduct);
+        addToCart(stock);
         await Swal.fire({
             title: '¡Agregado!',
             text: `${stock.idProduct.name} se ha agregado al carrito`,
@@ -358,10 +383,10 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                 {!isAdmin && (
                                     <button
                                         onClick={() => handleAddToCart(stock)}
-                                        className="w-full flex items-center gap-2 justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                        className={`w-full flex items-center gap-2 justify-center ${stock.amount === 0 ? "bg-gray-300" : "bg-blue-500 hover:bg-blue-600"} text-white font-bold py-2 px-4 rounded-lg transition-colors`}
                                         disabled={stock.amount === 0}
                                     >
-                                        <ShoppingCart size={20} />
+                                        {stock.amount === 0 ? <Ban size={20} /> : <ShoppingCart size={20} />}
                                         {stock.amount === 0 ? 'Sin Stock' : 'Agregar al Carrito'}
                                     </button>
                                 )}
