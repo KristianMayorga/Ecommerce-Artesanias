@@ -3,8 +3,9 @@
 import Link from "next/link";
 import Swal from "sweetalert2";
 import {useAuth} from "@/app/context/AuthContext";
-import {ChartNoAxesColumn, CirclePlus, PackagePlus, Users} from "lucide-react";
+import {ChartNoAxesColumn, CirclePlus, Heart, PackagePlus, Users} from "lucide-react";
 import {ROLES} from "@/app/types";
+
 
 const ButtonBar = () => {
 
@@ -56,6 +57,16 @@ const ButtonBar = () => {
                     >
                         <Users size={20}/>
                         Gestión de Usuarios
+                    </div>
+                </Link>
+            )}
+            {user?.role === ROLES.CLIENT && (
+                <Link href="/wishlist">
+                    <div
+                        className="flex items-center gap-2 px-4 py-2 bg-pink-300 hover:bg-pink-400 text-gray-600 rounded-lg transition-colors"
+                    >
+                        <Heart size={20}/>
+                        Mi lista de deseos
                     </div>
                 </Link>
             )}
