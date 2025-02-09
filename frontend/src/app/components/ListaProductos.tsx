@@ -79,7 +79,6 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         };
 
         fetchWishlist();
-
         fetchPOSList();
     }, []);
 
@@ -150,7 +149,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                     throw new Error('Failed to remove from wishlist');
                 }
 
-                setWishlist(prev => prev.filter(wish => wish._id !== wishItem._id));
+                setWishlist(prevWishlist => prevWishlist.filter(wish => wish._id !== wishItem._id));
 
                 await Swal.fire({
                     title: '¡Eliminado!',
@@ -179,7 +178,11 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 }
 
                 const data = await response.json();
-                setWishlist(prev => [...prev, data.data]);
+                setWishlist(prevWishlist => [...prevWishlist, {
+                    _id: data.data._id,
+                    productId: product,
+                    userId: getUserId()
+                }]);
 
                 await Swal.fire({
                     title: '¡Agregado!',
@@ -204,6 +207,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
             });
         }
     };
+
 
     const handleEdit = (id: string) => {
         router.push('/edit/' + id);
@@ -383,11 +387,19 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                     ${stock.idProduct.unitPrice.toLocaleString()}
                                 </p>
                                 {!isAdmin && (
-                                    <div onClick={() => handleSaveWish(stock.idProduct)}>
-                                        {validateWishProduct(stock.idProduct._id)
-                                            ? <Heart fill="red" size={20} className="text-red-500"/>
-                                            : <Heart size={20} className="text-red-700"/>}
-                                    </div>
+                                    <button
+                                        onClick={() => handleSaveWish(stock.idProduct)}
+                                        className="focus:outline-none"
+                                    >
+                                        <Heart
+                                            size={20}
+                                            className={`${
+                                                validateWishProduct(stock.idProduct._id)
+                                                    ? "fill-red-500 text-red-500"
+                                                    : "text-red-700"
+                                            }`}
+                                        />
+                                    </button>
                                 )}
                             </div>
                             <p className="text-sm text-gray-500">
