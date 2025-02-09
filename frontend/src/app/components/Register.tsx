@@ -40,7 +40,7 @@ const schema = yup.object().shape({
         .required('El correo es obligatorio'),
     documentId: yup
         .string()
-        .matches(/^\d{10,}$/, 'El documento debe tener al menos 10 dígitos')
+        .matches(/^\d{8,10}$/, 'El documento debe tener entre 8 y 10 dígitos')
         .required('El documento es obligatorio'),
     pss: yup
         .string()
