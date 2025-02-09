@@ -82,7 +82,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
         fetchWishlist();
         fetchPOSList();
-    }, []);
+    }, [getToken]);
 
     useEffect(() => {
         const fetchCategoriesAndProducts = async () => {

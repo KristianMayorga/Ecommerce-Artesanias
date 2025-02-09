@@ -15,8 +15,37 @@ export default function ListaDeseos() {
     const { getToken } = useAuth();
 
     useEffect(() => {
+        const fetchWishlist = async () => {
+            try {
+                const response = await fetch(`${CONST.url}/wishlist/read-wishlist`, {
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch wishlist');
+                }
+
+                const data: WishlistResponse = await response.json();
+                const validWishes = data.wl.filter(item => item.productId !== null);
+                setWishes(validWishes);
+            } catch (error) {
+                console.error('Error loading wishlist:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un error al cargar la lista de deseos',
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchWishlist();
-    }, []);
+    }, [getToken]);
 
     const fetchStock = async (productId: string) => {
         try {
@@ -36,7 +65,7 @@ export default function ListaDeseos() {
             return null;
         } catch (error) {
             console.error('Error fetching Stock Amount:', error);
-            Swal.fire({
+            await Swal.fire({
                 title: 'Error',
                 text: 'No se pudo obtener la cantidad de stock del producto.',
                 icon: 'error',
@@ -44,35 +73,6 @@ export default function ListaDeseos() {
             });
         }
     }
-
-    const fetchWishlist = async () => {
-        try {
-            const response = await fetch(`${CONST.url}/wishlist/read-wishlist`, {
-                headers: {
-                    'Authorization': `Bearer ${getToken()}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch wishlist');
-            }
-
-            const data: WishlistResponse = await response.json();
-            const validWishes = data.wl.filter(item => item.productId !== null);
-            setWishes(validWishes);
-        } catch (error) {
-            console.error('Error loading wishlist:', error);
-            await Swal.fire({
-                title: 'Error',
-                text: 'Hubo un error al cargar la lista de deseos',
-                icon: 'error',
-                confirmButtonText: 'Ok'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleDelete = async (wishId: string) => {
         try {

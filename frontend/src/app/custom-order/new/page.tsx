@@ -15,7 +15,7 @@ function NewCustomOrderPage() {
             router.push('/login');
             return;
         }
-    }, [router]);
+    }, [router, user]);
 
     return <OrderForm />;
 }
