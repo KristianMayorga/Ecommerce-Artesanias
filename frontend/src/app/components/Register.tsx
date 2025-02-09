@@ -59,8 +59,21 @@ const schema = yup.object().shape({
         .required('El teléfono es obligatorio'),
     dateOfBirth: yup
         .string()
-        .matches(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)')
         .required('La fecha de nacimiento es obligatoria')
+        .test('age', 'Debes tener al menos 18 años para registrarte', function(value) {
+            if (!value) return false;
+
+            const birthDate = new Date(value);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                return age - 1 >= 18;
+            }
+
+            return age >= 18;
+        }),
 });
 
 const Register: React.FC = () => {
@@ -196,14 +209,19 @@ const Register: React.FC = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="dateOfBirth" className="block mb-1 font-medium text-gray-800">Fecha de Nacimiento</label>
+                    <label htmlFor="dateOfBirth" className="block mb-1 font-medium text-gray-800">
+                        Fecha de Nacimiento
+                    </label>
                     <input
                         id="dateOfBirth"
                         type="date"
                         {...register('dateOfBirth')}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                         className="w-full px-3 py-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth.message}</p>}
+                    {errors.dateOfBirth && (
+                        <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth.message}</p>
+                    )}
                 </div>
 
                 <div>
@@ -236,8 +254,13 @@ const Register: React.FC = () => {
                     {isSubmitting ? 'Registrando...' : 'Registrarse'}
                 </button>
             </form>
-            <div className="pt-6 text-gray-700">
-                <Link href="/login">Ya tengo una cuenta!</Link>
+            <div className="pt-6 text-center">
+                <Link
+                    href="/login"
+                    className="text-gray-600 hover:text-gray-800 font-medium"
+                >
+                    ¿Ya tienes una cuenta? ¡Inicia sesión!
+                </Link>
             </div>
         </div>
     );

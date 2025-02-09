@@ -171,8 +171,13 @@ const Login: React.FC = () => {
                     {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </button>
             </form>
-            <div className={"pt-6 text-gray-700"}>
-                <Link href={"/register"}>Aún no tengo cuenta!</Link>
+            <div className="pt-6 text-center">
+                <Link
+                    href="/register"
+                    className="text-gray-600 hover:text-gray-800 font-medium"
+                >
+                    ¿No tienes cuenta? ¡Regístrate!
+                </Link>
             </div>
         </div>
     );
