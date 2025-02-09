@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
-import {Ban, ChevronDown, Heart, Pencil, ShoppingCart, Trash2} from "lucide-react";
+import {Ban, ChevronDown, Heart, Pencil, ShoppingCart, Trash2, X} from "lucide-react";
 import { CONST } from "@/app/constants";
 import { useAuth } from "@/app/context/AuthContext";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
@@ -22,11 +22,13 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
     const [categories, setCategories] = useState<Record<string, string>>({});
+    const [selectedCategories, setSelectedCategories] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     const [posList, setPosList] = useState<POS[]>([]);
     const [selectedPOS, setSelectedPOS] = useState<string>("");
     const { addToCart } = useCart();
     const { getToken, getUserId } = useAuth();
+
 
     const validateWishProduct = (productId: string) => {
         return wishlist.some(wish => wish.productId?._id === productId);
@@ -315,10 +317,30 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
         return <LoadingSpinner />;
     }
 
+    const handleCategoryToggle = (categoryId: string) => {
+        setSelectedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(categoryId)) {
+                newSet.delete(categoryId);
+            } else {
+                newSet.add(categoryId);
+            }
+            return newSet;
+        });
+    };
+
+    const clearFilters = () => {
+        setSelectedCategories(new Set());
+    };
+
+    const filteredStocks = stocks.filter(stock =>
+        selectedCategories.size === 0 || selectedCategories.has(stock.idProduct.category)
+    );
+
     return (
         <div className="space-y-6">
             <div className="w-full max-w-md">
-                <label htmlFor="pos-select" className="block text-sm font-medium text-gray-700  mb-2">
+                <label htmlFor="pos-select" className="block text-sm font-medium text-gray-700 mb-2">
                     Seleccionar Punto de Venta
                 </label>
                 <div className="relative">
@@ -326,32 +348,52 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                         id="pos-select"
                         value={selectedPOS}
                         onChange={(e) => setSelectedPOS(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                 bg-white
-                                 text-gray-900
-                                 shadow-sm appearance-none
-                                 hover:border-gray-400
-                                 cursor-pointer"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 shadow-sm appearance-none hover:border-gray-400 cursor-pointer"
                     >
                         {posList.map((pos) => (
-                            <option
-                                key={pos._id}
-                                value={pos._id}
-                                className="bg-white  text-gray-900 "
-                            >
+                            <option key={pos._id} value={pos._id}>
                                 {pos.name} - {pos.city}
                             </option>
                         ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <ChevronDown className={`w-4 h-4 text-gray-400 `} />
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
                     </div>
                 </div>
             </div>
 
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-700">Filtrar por categoría</h3>
+                    {selectedCategories.size > 0 && (
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                        >
+                            <X size={16} />
+                            Limpiar filtros
+                        </button>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {Object.entries(categories).map(([id, name]) => (
+                        <button
+                            key={id}
+                            onClick={() => handleCategoryToggle(id)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                selectedCategories.has(id)
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            {name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
-                {stocks.map((stock) => (
+                {filteredStocks.map((stock) => (
                     <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden">
                         <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-tr from-gray-50 to-gray-100">
                             <div className="absolute inset-0 backdrop-blur-sm">

@@ -50,7 +50,6 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ onComplete, onError
 
     const processPayment = async () => {
         try {
-            // Simulamos cada paso del proceso
             for (let i = 0; i < steps.length - 1; i++) {
                 setCurrentStep(i);
                 const currentStepKey = steps[i];
@@ -78,7 +77,6 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ onComplete, onError
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg"
         >
-            {/* Barra de progreso */}
             <div className="w-full h-2 bg-gray-200 rounded-full mb-8">
                 <motion.div
                     className="h-full bg-blue-500 rounded-full"
@@ -88,7 +86,6 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ onComplete, onError
                 />
             </div>
 
-            {/* Contenedor de pasos */}
             <div className="space-y-6">
                 {steps.map((step, index) => {
                     const StepIcon = STEPS[step].icon;

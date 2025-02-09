@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { CONST } from "@/app/constants";
 import { Category, CategoryResponse, POS, ROLES, StockData, StocksByPOS } from "@/app/types";
 import Image from 'next/image';
+import {Plus} from "lucide-react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -164,7 +165,6 @@ function CrearProducto() {
                 throw new Error(productData.message || 'Error creating product');
             }
 
-            // Crear stocks para cada POS donde se especificó una cantidad
             const stockPromises = Object.entries(data.stocks || {}).map(([posId, stockData]) => {
                 if (!stockData || !stockData.amount) return null;
 
@@ -217,7 +217,6 @@ function CrearProducto() {
         <div className="max-w-2xl mx-auto p-6 mt-6 bg-white shadow-md rounded-lg text-gray-600">
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Crear Producto</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Campos básicos del producto */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700">
                         Nombre
@@ -340,7 +339,6 @@ function CrearProducto() {
                     )}
                 </div>
 
-                {/* Sección de stocks por POS */}
                 <div className="mt-6">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Stock por Tienda</h2>
                     <div className="space-y-4">
@@ -377,9 +375,7 @@ function CrearProducto() {
                                             }}
                                             className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                            </svg>
+                                            <Plus className="h-4 w-4" />
                                             Agregar stock
                                         </button>
                                     )}

@@ -4,7 +4,6 @@ export const ROLES = {
     POS: 'Vendedor'
 }
 
-// Login
 export interface ILoginInputs {
     email: string;
     pss: string;
@@ -31,7 +30,6 @@ export interface UserDataResponse {
     email?: string;
 }
 
-// Lista Productos
 export interface ProductResponse {
     _id: string;
     name: string;
@@ -88,17 +86,6 @@ export interface CategoryResponse {
 
 export interface ProductListProps {
     isAdmin?: boolean;
-}
-
-// Crear Producto
-export interface ProductFormInputs {
-    name: string;
-    unitPrice: number;
-    quali: number;
-    category: string;
-    description: string;
-    image: FileList;
-    amount: number;
 }
 
 export interface EditProductFormInputs {

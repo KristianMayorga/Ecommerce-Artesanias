@@ -10,6 +10,7 @@ import { withAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
 import Image from 'next/image';
 import {Category, EditProductFormInputs, POS, ROLES, Stock, StockData, StocksByPOS} from "@/app/types";
+import {Plus} from "lucide-react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -46,7 +47,7 @@ const schema = yup.object().shape({
     stocks: yup.object().test('stocks', 'Los stocks deben ser números positivos cuando se especifican', (value: TestValue) => {
         if (!value) return true;
         return Object.values(value).every((stock) => {
-            if (!stock || !stock.amount) return true; // Permitir valores undefined o sin amount
+            if (!stock || !stock.amount) return true;
             return stock.amount > 0;
         });
     })
@@ -151,7 +152,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
                 }
             });
 
-            // Actualizar producto
             const formData = new FormData();
             formData.append('name', data.name);
             formData.append('unitPrice', data.unitPrice.toString());
@@ -177,7 +177,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
                 if (!stockData || !stockData.amount) return;
 
                 if (stockData.stockId) {
-                    // Actualizar stock existente
                     return fetch(`${CONST.url}/stock/update-stock/${stockData.stockId}`, {
                         method: 'PUT',
                         headers: {
@@ -188,7 +187,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
                         }),
                     });
                 } else {
-                    // Crear nuevo stock
                     return fetch(`${CONST.url}/stock/add-stock`, {
                         method: 'POST',
                         headers: {
@@ -239,7 +237,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
         <div className="max-w-2xl mx-auto p-6 mt-6 bg-white shadow-md rounded-lg text-gray-600">
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Editar Producto</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Campos básicos del producto */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700">
                         Nombre
@@ -342,7 +339,6 @@ function EditarProducto({ params }: { params: { id: string } }) {
                     </div>
                 </div>
 
-                {/* Sección de stocks por POS */}
                 <div className="mt-6">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Stock por Tienda</h2>
                     <div className="space-y-4">
@@ -381,9 +377,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
                                                     }}
                                                     className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
+                                                    <Plus className="h-4 w-4" />
                                                     Agregar stock
                                                 </button>
                                                 {watch(`stocks.${pos._id}`) && (
