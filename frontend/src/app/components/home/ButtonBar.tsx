@@ -1,36 +1,25 @@
 'use client'
 
 import Link from "next/link";
-import Swal from "sweetalert2";
 import {useAuth} from "@/app/context/AuthContext";
 import {ChartNoAxesColumn, CirclePlus, Heart, PackagePlus, Users} from "lucide-react";
 import {ROLES} from "@/app/types";
 
 
 const ButtonBar = () => {
-
     const {user} = useAuth();
-
-    const handleReports = async () => {
-        await Swal.fire({
-            title: 'Función no implementada',
-            text: 'La funcionalidad de reportes está en desarrollo',
-            icon: 'info',
-            confirmButtonText: 'Ok'
-        });
-    };
 
     return (
         <div className="flex space-x-4 mb-6">
             {user?.role === ROLES.ADMIN && (
-                <div onClick={() => handleReports()} className={"cursor-pointer"}>
+                <Link href="/reports">
                     <div
                     className="flex items-center gap-2 px-4 py-2 bg-orange-300 hover:bg-orange-400 text-gray-600 rounded-lg transition-colors"
                     >
                     <ChartNoAxesColumn size={20}/>
                     Ver Reportes
                     </div>
-                </div>
+                </Link>
             )}
             {user?.role === ROLES.ADMIN && (
                 <Link href="/create">
