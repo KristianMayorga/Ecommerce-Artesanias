@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 import {PaymentMethodAPI, PaymentMethodsResponse, POS, POSResponse} from "@/app/types";
 import { AnimatePresence, motion } from "motion/react";
 import PaymentProcessor from "@/app/components/PaymentProcessor";
+import AvailabilityCard from "@/app/components/AvailabilityCard";
 
 const PAYMENT_PORTALS = {
     CARD: "12345",
@@ -38,6 +39,7 @@ export default function CheckoutPage() {
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodAPI[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
 
     const finalAmount = shippingMethod === 'delivery'
         ? totalAmount + 20000
@@ -140,6 +142,24 @@ export default function CheckoutPage() {
         }
     };
 
+
+    const handleSelect = useCallback((value: string) => {
+        if (!value || value.trim() === '') {
+            setSelectedStore('');
+            setSelectedShippingMethod('');
+            return;
+        }
+
+        if (items.length === 0) {
+            return;
+        }
+
+        setSelectedStore(value);
+        const allProductsAvailable = items.every(item => item.storeId === value);
+        setSelectedShippingMethod(allProductsAvailable ? 'fastDelivery' : 'slowDelivery');
+    }, [items, setSelectedStore, setSelectedShippingMethod]);
+
+
     const isCardPayment = paymentMethods.find(pm => pm._id === paymentMethod)?.name === "Tarjeta";
 
     return (
@@ -175,7 +195,6 @@ export default function CheckoutPage() {
                     >
                     <h1 className="text-3xl font-bold mb-8">Finalizar Compra</h1>
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Order Summary */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Resumen del pedido</h2>
                     <div className="space-y-4">
@@ -202,7 +221,6 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                {/* Shipping Method */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Método de envío</h2>
                     <div className="space-y-4">
@@ -231,7 +249,7 @@ export default function CheckoutPage() {
                             <div className="space-y-4">
                                 <select
                                     value={selectedStore}
-                                    onChange={(e) => setSelectedStore(e.target.value)}
+                                    onChange={(e) => handleSelect(e.target.value)}
                                     className="w-full p-2 border rounded"
                                     required
                                 >
@@ -242,6 +260,12 @@ export default function CheckoutPage() {
                                         </option>
                                     ))}
                                 </select>
+
+                                {selectedStore && (
+                                    <AvailabilityCard
+                                        isAvailable={selectedShippingMethod === 'fastDelivery'}
+                                    />
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -277,7 +301,6 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                {/* Payment Method */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-xl font-semibold mb-4">Método de pago</h2>
                     <div className="space-y-4">
