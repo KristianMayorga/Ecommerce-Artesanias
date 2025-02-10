@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import OrderForm from '@/app/components/CustomOrderForm';
 import {useAuth, withAuth} from "@/app/context/AuthContext";
 import {ROLES} from "@/app/types";
+import PedidoPersonalizado from "@/app/components/CustomOrderForm";
 
 function NewCustomOrderPage() {
     const router = useRouter();
@@ -17,7 +17,7 @@ function NewCustomOrderPage() {
         }
     }, [router, user]);
 
-    return <OrderForm />;
+    return <PedidoPersonalizado />;
 }
 
 export default withAuth(NewCustomOrderPage, [ROLES.CLIENT, ROLES.POS])

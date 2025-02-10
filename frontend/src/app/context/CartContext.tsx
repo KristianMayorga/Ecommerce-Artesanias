@@ -1,23 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import Swal from "sweetalert2";
-import {CategoryResponse, Product, Stock, StockResponse} from "@/app/types";
+import {CartContextType, CartItem, CategoryResponse, Stock, StockResponse} from "@/app/types";
 import {CONST} from "@/app/constants";
 
-interface CartItem extends Product {
-    quantity: number;
-    storeName: string;
-    storeId: string;
-}
-
-interface CartContextType {
-    items: CartItem[];
-    addToCart: (stock: Stock) => void;
-    removeFromCart: (productId: string) => void;
-    updateQuantity: (productId: string, posId: string, quantity: number) => void;
-    clearCart: () => void;
-    totalItems: number;
-    totalAmount: number;
-}
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 

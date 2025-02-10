@@ -158,3 +158,29 @@ export interface WishlistItem {
     _id: string;
     productId: ProductResponse;
 }
+
+export interface CartItem extends Product {
+    quantity: number;
+    storeName: string;
+    storeId: string;
+}
+
+export interface StoreGroup {
+    storeName: string;
+    items: CartItem[];
+    subtotal: number;
+}
+
+export interface StoreGroups {
+    [key: string]: StoreGroup;
+}
+
+export interface CartContextType {
+    items: CartItem[];
+    addToCart: (stock: Stock) => void;
+    removeFromCart: (productId: string) => void;
+    updateQuantity: (productId: string, posId: string, quantity: number) => void;
+    clearCart: () => void;
+    totalItems: number;
+    totalAmount: number;
+}

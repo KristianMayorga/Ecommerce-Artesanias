@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -8,6 +8,11 @@ import * as yup from 'yup';
 import Swal from 'sweetalert2';
 import { useAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
+
+type Category = {
+    _id: string;
+    name: string;
+};
 
 type CustomOrderInputs = {
     category: string;
@@ -17,8 +22,7 @@ type CustomOrderInputs = {
 
 const schema = yup.object().shape({
     category: yup.string()
-        .required('La categoría es requerida')
-        .oneOf(['Cerámica', 'Textiles', 'Joyería', 'Madera', 'Cestería', 'Metal', 'Diseño'], 'Categoría no válida'),
+        .required('La categoría es requerida'),
     description: yup.string()
         .required('La descripción es requerida')
         .min(20, 'La descripción debe tener al menos 20 caracteres')
@@ -41,6 +45,8 @@ export default function PedidoPersonalizado() {
     const router = useRouter();
     const { getToken, getUserId } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
     const {
         register,
@@ -49,6 +55,36 @@ export default function PedidoPersonalizado() {
     } = useForm<CustomOrderInputs>({
         resolver: yupResolver(schema)
     });
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch(`${CONST.url}/categoriaProd/read-cp`);
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar las categorías');
+                }
+
+                const data = await response.json();
+                setCategories(data.cps);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudieron cargar las categorías',
+                    icon: 'error',
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true,
+                    showConfirmButton: false
+                });
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const onSubmit: SubmitHandler<CustomOrderInputs> = async (data) => {
         try {
@@ -99,7 +135,7 @@ export default function PedidoPersonalizado() {
                 showConfirmButton: false
             });
 
-            router.push('/home');
+            router.push('/custom-order');
         } catch (error) {
             console.error('Error al crear pedido:', error);
             await Swal.fire({
@@ -115,6 +151,14 @@ export default function PedidoPersonalizado() {
             setLoading(false);
         }
     };
+
+    if (isLoadingCategories) {
+        return (
+            <div className="flex justify-center items-center min-h-[200px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-3xl mx-auto p-6 mt-6 bg-white rounded-lg shadow-lg">
@@ -134,13 +178,11 @@ export default function PedidoPersonalizado() {
                         className="w-full px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="">Seleccione una categoría</option>
-                        <option value="Cerámica">Cerámica</option>
-                        <option value="Textiles">Textiles</option>
-                        <option value="Joyería">Joyería</option>
-                        <option value="Madera">Madera</option>
-                        <option value="Cestería">Cestería</option>
-                        <option value="Metal">Metal</option>
-                        <option value="Diseño">Diseño</option>
+                        {categories.map((category) => (
+                            <option key={category._id} value={category._id}>
+                                {category.name}
+                            </option>
+                        ))}
                     </select>
                     {errors.category && (
                         <p className="mt-1 text-sm text-red-600">
