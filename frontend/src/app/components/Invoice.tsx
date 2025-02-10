@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Printer, Download, Loader2 } from 'lucide-react';
+import { Printer, Loader2 } from 'lucide-react';
 import { CONST } from '@/app/constants';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import Image from 'next/image';
 import {
     DataPayment,
@@ -30,7 +28,6 @@ const Invoice: React.FC<InvoiceProps> = ({ transactionId }) => {
     const [paymentMethods, setPaymentMethods] = useState<Record<string, PaymentMethodAPI>>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -137,7 +134,6 @@ const Invoice: React.FC<InvoiceProps> = ({ transactionId }) => {
                 <button
                     onClick={() => window.print()}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg"
-                    disabled={isGeneratingPDF}
                 >
                     <Printer className="h-4 w-4" />
                     Imprimir / Descargar

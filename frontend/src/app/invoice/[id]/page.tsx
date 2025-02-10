@@ -9,7 +9,7 @@ const isValidObjectId = (id: string) => {
 export default function InvoicePage({ params }: { params: { id: string } }) {
     if (!isValidObjectId(params.id)) {
         notFound();
-    }   
+    }
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-3xl">
