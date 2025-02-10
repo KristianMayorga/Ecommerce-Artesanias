@@ -7,7 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
-import {PaymentMethodAPI, PaymentMethodsResponse, POS, POSResponse} from "@/app/types";
+import {PaymentMethodAPI, PaymentMethodsResponse, PaymentResponse, POS, POSResponse} from "@/app/types";
 import { AnimatePresence, motion } from "motion/react";
 import PaymentProcessor from "@/app/components/PaymentProcessor";
 import AvailabilityCard from "@/app/components/AvailabilityCard";
@@ -40,10 +40,13 @@ export default function CheckoutPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
+    const [paymentResponse, setPaymentResponse] = useState<PaymentResponse>();
 
     const finalAmount = shippingMethod === 'delivery'
         ? totalAmount + 20000
         : totalAmount;
+
+    const totalTax = finalAmount * 0.19;
 
     const fetchStores = useCallback(async () => {
         try {
@@ -104,7 +107,6 @@ export default function CheckoutPage() {
                 idPOS: item.storeId,
             }));
 
-            const totalTax = finalAmount * 0.19;
             const selectedPaymentMethod = paymentMethods.find(pm => pm._id === paymentMethod);
 
             const paymentData = {
@@ -128,6 +130,10 @@ export default function CheckoutPage() {
             if (!response.ok) {
                 throw new Error('Payment failed');
             }
+
+            const responseData: PaymentResponse = await response.json();
+            setPaymentResponse(responseData);
+
         } catch (error) {
             console.error('Error processing payment:', error);
             setIsProcessing(false);
@@ -165,7 +171,7 @@ export default function CheckoutPage() {
     return (
         <div className="max-w-4xl mx-auto p-6 text-gray-800">
             <AnimatePresence mode="wait">
-                {isProcessing ? (
+                {isProcessing && paymentResponse ? (
                         <PaymentProcessor
                             onComplete={async () => {
                                 await Swal.fire({
@@ -175,7 +181,7 @@ export default function CheckoutPage() {
                                     confirmButtonText: 'Aceptar'
                                 });
                                 clearCart();
-                                router.push('/home');
+                                router.push(`/invoice/${paymentResponse?.data.transaction._id}`);
                             }}
                             onError={async (error) => {
                                 setIsProcessing(false);
@@ -215,8 +221,12 @@ export default function CheckoutPage() {
                             </div>
                         )}
                         <div className="flex justify-between items-center pt-4 border-t">
+                            <p className="font-bold">IVA</p>
+                            <p className="font-bold text-blue-600">${(totalTax).toLocaleString()}</p>
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t">
                             <p className="font-bold">Total</p>
-                            <p className="font-bold text-emerald-600">${finalAmount.toLocaleString()}</p>
+                            <p className="font-bold text-emerald-600">${(finalAmount+totalTax).toLocaleString()}</p>
                         </div>
                     </div>
                 </div>

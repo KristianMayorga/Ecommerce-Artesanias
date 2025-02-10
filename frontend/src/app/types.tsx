@@ -184,3 +184,48 @@ export interface CartContextType {
     totalItems: number;
     totalAmount: number;
 }
+
+
+export interface PaymentResponse {
+    error: boolean
+    message: string
+    data: DataPayment
+}
+
+export interface DataPayment {
+    transaction: Transaction
+    invoice: Invoice
+    productDetails: ProductDetail[]
+}
+
+export interface Transaction {
+    idPayPortal: string
+    idMeansOP: string
+    _id: string
+    date: string
+    __v: number
+}
+
+export interface Invoice {
+    total: number
+    totalTax: number
+    userId: string
+    transactionId: string
+    state: boolean
+    _id: string
+    date: string
+    __v: number
+}
+
+export interface ProductDetail {
+    idInvoice: string
+    idProduct: string
+    quantity: number
+    idPOS: string
+}
+
+export interface DataProductResponse {
+    error: boolean,
+    message: string,
+    data: ProductResponse
+}

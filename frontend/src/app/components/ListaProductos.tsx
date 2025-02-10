@@ -226,12 +226,9 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 icon: 'warning',
                 showDenyButton: true,
                 showCancelButton: true,
-                confirmButtonText: 'Solo el Stock',
-                denyButtonText: 'Stock y Producto',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Sí Borrar',
+                confirmButtonColor: '#d33',
                 denyButtonColor: '#d33',
-                cancelButtonColor: '#6e7881'
             });
 
             if (result.isDismissed) {
@@ -254,41 +251,12 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                 setStocks(stocks.filter(s => s._id !== stock._id));
 
                 await Swal.fire({
-                    title: '¡Stock Eliminado!',
-                    text: 'El stock ha sido eliminado exitosamente.',
+                    title: '¡Producto Eliminado!',
+                    text: 'El producto ha sido eliminado exitosamente.',
                     icon: 'success'
                 });
             }
 
-            if (result.isDenied) {
-                const stockResponse = await fetch(`${CONST.url}/stock/delete-stock/${stock._id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`,
-                    },
-                });
-
-                const productResponse = await fetch(`${CONST.url}/product/delete-product/${stock.idProduct._id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`,
-                    },
-                });
-
-                if (!stockResponse.ok || !productResponse.ok) {
-                    throw new Error('Failed to delete stock and product');
-                }
-
-                setStocks(stocks.filter(s => s.idProduct._id !== stock.idProduct._id));
-
-                await Swal.fire({
-                    title: '¡Eliminados!',
-                    text: 'El stock y el producto han sido eliminados exitosamente.',
-                    icon: 'success'
-                });
-            }
         } catch (error) {
             console.error('Error deleting:', error);
             await Swal.fire({

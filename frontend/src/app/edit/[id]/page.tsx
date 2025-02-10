@@ -61,7 +61,10 @@ function EditarProducto({ params }: { params: { id: string } }) {
     const [currentImage, setCurrentImage] = useState<string>('');
 
     const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<EditProductFormInputs>({
-        resolver: yupResolver(schema)
+        resolver: yupResolver(schema),
+        defaultValues: {
+            category: ''
+        }
     });
 
     const selectedImage = watch('image');
@@ -103,7 +106,7 @@ function EditarProducto({ params }: { params: { id: string } }) {
 
                 setValue('name', productData.data.name);
                 setValue('unitPrice', productData.data.unitPrice);
-                setValue('category', productData.data.category);
+                setValue('category', productData.data.category._id || productData.data.category);
                 setValue('description', productData.data.description);
                 setCurrentImage(productData.data.image);
 
@@ -277,8 +280,9 @@ function EditarProducto({ params }: { params: { id: string } }) {
                     <select
                         {...register('category')}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        defaultValue=""
                     >
-                        <option value="">Seleccione una categoría</option>
+                        <option value="" disabled>Seleccione una categoría</option>
                         {categories.map((category: Category) => (
                             <option key={category._id} value={category._id}>
                                 {category.name}
