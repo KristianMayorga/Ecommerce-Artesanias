@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
-import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
 import {Ban, ChevronDown, Heart, Pencil, ShoppingCart, Trash2, X} from "lucide-react";
 import { CONST } from "@/app/constants";
@@ -11,13 +10,13 @@ import {
     CategoryResponse,
     POS,
     POSResponse,
-    ProductListProps,
-    ProductResponse,
+    ProductResponse, ROLES,
     Stock,
     StockResponse, WishlistItem, WishlistResponse
 } from "@/app/types";
+import Image from "next/image";
 
-export default function ListaProductos({ isAdmin = false }: ProductListProps) {
+export default function ListaProductos() {
     const router = useRouter();
     const [stocks, setStocks] = useState<Stock[]>([]);
     const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -27,7 +26,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
     const [posList, setPosList] = useState<POS[]>([]);
     const [selectedPOS, setSelectedPOS] = useState<string>("");
     const { addToCart } = useCart();
-    const { getToken, getUserId } = useAuth();
+    const { getToken, getUserId, user, isAdmin } = useAuth();
 
 
     const validateWishProduct = (productId: string) => {
@@ -224,7 +223,6 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                     <p class="text-sm text-gray-600 mb-4">Producto: ${stock.idProduct.name}</p>
                 `,
                 icon: 'warning',
-                showDenyButton: true,
                 showCancelButton: true,
                 confirmButtonText: 'Sí Borrar',
                 confirmButtonColor: '#d33',
@@ -362,7 +360,8 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
 
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
                 {filteredStocks.map((stock) => (
-                    <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                    <div key={stock._id} className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full">
+                        {/* Image Container */}
                         <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-tr from-gray-50 to-gray-100">
                             <div className="absolute inset-0 backdrop-blur-sm">
                                 <Image
@@ -385,38 +384,45 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                 />
                             </div>
                         </div>
-                        <div className="p-4">
-                            <h2 className="text-xl font-bold mb-2 text-[#789DBC]">
-                                {stock.idProduct.name}
-                            </h2>
-                            <div className="flex justify-between mb-2 text-gray-600">
-                                <span>{stock.idProduct.description}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-lg font-bold text-emerald-700">
-                                    ${stock.idProduct.unitPrice.toLocaleString()}
-                                </p>
-                                {!isAdmin && (
-                                    <button
-                                        onClick={() => handleSaveWish(stock.idProduct)}
-                                        className="focus:outline-none"
-                                    >
-                                        <Heart
-                                            size={20}
-                                            className={`${
-                                                validateWishProduct(stock.idProduct._id)
-                                                    ? "fill-red-500 text-red-500"
-                                                    : "text-red-700"
-                                            }`}
-                                        />
-                                    </button>
-                                )}
-                            </div>
-                            <p className="text-sm text-gray-500">
-                                {categories[stock.idProduct.category] || 'Categoría N/A'}
-                            </p>
 
-                            <div className="mt-4 space-y-2">
+                        {/* Content Container */}
+                        <div className="flex flex-col flex-grow p-4">
+                            {/* Product Info */}
+                            <div className="flex-grow">
+                                <h2 className="text-xl font-bold mb-2 text-[#789DBC]">
+                                    {stock.idProduct.name}
+                                </h2>
+                                <div className="flex justify-between mb-2 text-gray-600">
+                                    <span>{stock.idProduct.description}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-lg font-bold text-emerald-700">
+                                        ${stock.idProduct.unitPrice.toLocaleString()}
+                                    </p>
+                                    {user?.role === ROLES.CLIENT && (
+                                        <button
+                                            onClick={() => handleSaveWish(stock.idProduct)}
+                                            className="focus:outline-none"
+                                            aria-label="Agregar a favoritos"
+                                        >
+                                            <Heart
+                                                size={20}
+                                                className={`${
+                                                    validateWishProduct(stock.idProduct._id)
+                                                        ? "fill-red-500 text-red-500"
+                                                        : "text-red-700"
+                                                }`}
+                                            />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    {categories[stock.idProduct.category] || 'Categoría N/A'}
+                                </p>
+                            </div>
+
+                            {/* Footer with Buttons */}
+                            <div className="mt-4 pt-4 border-t border-gray-200">
                                 {!isAdmin && (
                                     <button
                                         onClick={() => handleAddToCart(stock)}
@@ -435,6 +441,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                         <button
                                             onClick={() => handleEdit(stock.idProduct._id)}
                                             className="flex items-center gap-2 bg-amber-200 hover:bg-amber-300 text-gray-600 font-bold py-2 px-4 rounded-lg transition-colors"
+                                            aria-label="Editar producto"
                                         >
                                             <Pencil size={20} />
                                             Editar
@@ -442,6 +449,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                                         <button
                                             onClick={() => handleDelete(stock)}
                                             className="flex items-center gap-2 bg-red-400 hover:bg-red-500 text-gray-100 font-bold py-2 px-4 rounded-lg transition-colors"
+                                            aria-label="Eliminar producto"
                                         >
                                             <Trash2 size={20} />
                                             Eliminar
@@ -452,7 +460,7 @@ export default function ListaProductos({ isAdmin = false }: ProductListProps) {
                         </div>
                     </div>
                 ))}
-            </div>
+                    </div>
         </div>
     );
 }

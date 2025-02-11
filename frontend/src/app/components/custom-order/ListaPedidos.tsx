@@ -6,15 +6,44 @@ import StatusBadge from "./StatusBadge";
 import { useAuth } from "@/app/context/AuthContext";
 import { CONST } from "@/app/constants";
 import Swal from "sweetalert2";
-import {Personalization} from "@/app/types";
+import { Personalization, CategoryResponse } from "@/app/types";
 
 export default function ListaPedidos() {
     const [orders, setOrders] = useState<Personalization[]>([]);
+    const [categories, setCategories] = useState<Record<string, string>>({});
     const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'aceptado' | 'rechazado'>('todos');
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const { isAdmin, user, getToken } = useAuth();
+
+    const loadCategories = useCallback(async () => {
+        try {
+            const response = await fetch(`${CONST.url}/categoriaProd/read-cp`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch categories');
+            }
+            const categoryData: CategoryResponse = await response.json();
+
+            const categoriesMap = categoryData.cps.reduce((acc, category) => ({
+                ...acc,
+                [category._id]: category.name
+            }), {});
+
+            setCategories(categoriesMap);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            await Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar las categorías',
+                icon: 'error',
+                timer: 1500,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false
+            });
+        }
+    }, []);
 
     const loadOrders = useCallback(async () => {
         try {
@@ -54,8 +83,8 @@ export default function ListaPedidos() {
     }, [getToken]);
 
     useEffect(() => {
-        loadOrders();
-    }, [loadOrders]);
+        Promise.all([loadOrders(), loadCategories()]);
+    }, [loadOrders, loadCategories]);
 
     const filteredOrders = useMemo(() => {
         let filtered = orders;
@@ -159,7 +188,7 @@ export default function ListaPedidos() {
                                         {order.userId.name} {order.userId.lastName}
                                     </h2>
                                     <p className="text-gray-600">
-                                        Categoría: {order.category}
+                                        Categoría: {categories[order.category] || 'Categoría N/A'}
                                     </p>
                                     <p className="text-gray-600">
                                         Presupuesto: ${order.budget.toFixed(2)}
